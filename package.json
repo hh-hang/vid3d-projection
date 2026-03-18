@@ -1,6 +1,6 @@
 {
   "name": "three-video-projection",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Projector utility for projecting video textures onto meshes (three.js)",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -24,7 +24,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup",
     "prepare": "npm run build",
     "build:cinema": "npm --prefix ./examples/cinema install && npm --prefix ./examples/cinema run build",
     "build:monitor": "npm --prefix ./examples/monitor install && npm --prefix ./examples/monitor run build",
