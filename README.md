@@ -20,7 +20,7 @@
 
 ### 视频融合
 
-[![视频融合](https://raw.githubusercontent.com/hh-hang/three-video-projection/main/example/public/imgs/2.gif "点击查看视频融合示例")](https://hh-hang.github.io/three-video-projection/)
+[![视频融合](https://raw.githubusercontent.com/hh-hang/three-video-projection/main/example/public/imgs/2.gif "点击查看视频融合示例")](https://hh-hang.github.io/three-video-projection/monitor.html)
 
 ### 电影院
 

@@ -20,7 +20,7 @@ Click on the images to view the live demos:
 
 ### Video Fusion
 
-[![Video Fusion](https://raw.githubusercontent.com/hh-hang/three-video-projection/main/example/public/imgs/2.gif "Click to view Video Fusion demo")](https://hh-hang.github.io/three-video-projection/)
+[![Video Fusion](https://raw.githubusercontent.com/hh-hang/three-video-projection/main/example/public/imgs/2.gif "Click to view Video Fusion demo")](https://hh-hang.github.io/three-video-projection/monitor.html)
 
 ### Cinema
 
