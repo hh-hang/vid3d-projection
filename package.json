@@ -26,7 +26,7 @@
     "dev": "vite",
     "build": "tsup",
     "prepare": "npm run build",
-    "build:example": "vite build"
+    "build:example": "vite build && node -e \"require('fs').writeFileSync('docs/.nojekyll', '')\""
   },
   "peerDependencies": {
     "three": "^0.182.0"
