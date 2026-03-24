@@ -37,12 +37,6 @@ git clone https://github.com/hh-hang/three-video-projection.git
 # 安装依赖
 npm install
 
-# 进入示例目录
-cd example
-
-# 安装示例依赖
-npm install
-
 # 运行开发服务器
 npm run dev
 ```
@@ -88,6 +82,8 @@ const projector = await createVideoProjector({
   opacity: 1.0, // 投影透明度
   projBias: 0.0001, // 深度偏移
   edgeFeather: 0.05, // 边缘羽化程度
+  cropRect: [0, 0, 1, 1], // 裁剪区域（UV空间，[x0, y0, x1, y1]，范围 0~1）
+  quadCorners: [[0, 0], [1, 0], [1, 1], [0, 1]], // 四角点变换（投影UV空间，顺序：左下、右下、右上、左上）
   isShowHelper: true, // 是否显示相机辅助器
 });
 
@@ -126,6 +122,8 @@ projector.dispose();
 - `opacity?: number` — 全局透明度，默认 `1.0`。
 - `projBias?: number` — 深度偏移，默认 `0.0001`。
 - `edgeFeather?: number` — 边缘羽化宽度，默认 `0.05`。
+- `cropRect?: [number, number, number, number]` — 视频纹理裁剪区域，UV 空间 `[x0, y0, x1, y1]`，范围 `0~1`。默认 `[0, 0, 1, 1]`（不裁剪）。
+- `quadCorners?: [[number, number], [number, number], [number, number], [number, number]]` — 四角点变换，在投影 UV 空间中指定四角坐标（顺序：左下、右下、右上、左上），用于梯形/透视校正。默认为单位正方形。
 - `isShowHelper?: boolean` — 是否显示 `CameraHelper` 来可视化投影相机，默认 `true`。
 
 ---
@@ -142,10 +140,12 @@ projector.dispose();
 - `updateElevationDeg(deg: number): void` — 设置俯仰角（度）。
 - `updateRollDeg(deg: number): void` — 设置滚转角（度）。
 - `updateOpacity(opacity: number): void` — 更新投影透明度（0~1）。
+- `updateCropRect(rect: [number, number, number, number]): void` — 动态更新裁剪区域（UV 空间，`[x0, y0, x1, y1]`）。
+- `updateQuadCorners(corners: [[number, number], [number, number], [number, number], [number, number]]): void` — 动态更新四角点变换（投影 UV 空间，顺序：左下、右下、右上、左上）。
 
 属性：
 
-- `uniforms` — 暴露给外部的着色器 uniform 对象（包含 `projectorMap`、`projectorDepthMap`、`projectorMatrix`、`intensity`、`projBias`、`edgeFeather`、`opacity` 等）。
+- `uniforms` — 暴露给外部的着色器 uniform 对象（包含 `projectorMap`、`projectorDepthMap`、`projectorMatrix`、`intensity`、`projBias`、`edgeFeather`、`opacity`、`cropRect`、`quadHomography` 等）。
 - `overlays: THREE.Mesh[]` — 内部创建的 overlay 列表（投影用透明网格）。
 - `targetMeshes: THREE.Mesh[]` — 当前被投影的目标网格列表。
 - `projCam: THREE.PerspectiveCamera` — 用于投影的相机。

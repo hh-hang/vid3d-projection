@@ -1,6 +1,6 @@
 {
   "name": "three-video-projection",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Projector utility for projecting video textures onto meshes (three.js)",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,10 +26,7 @@
     "dev": "vite",
     "build": "tsup",
     "prepare": "npm run build",
-    "build:cinema": "npm --prefix ./examples/cinema install && npm --prefix ./examples/cinema run build",
-    "build:monitor": "npm --prefix ./examples/monitor install && npm --prefix ./examples/monitor run build",
-    "collect": "node ./scripts/collect.js",
-    "build:examples": "npm run build:cinema && npm run build:monitor && npm run collect"
+    "build:example": "vite build"
   },
   "peerDependencies": {
     "three": "^0.182.0"
@@ -38,13 +35,14 @@
     "@types/node": "^25.0.10",
     "@types/three": "^0.182.0",
     "@vitejs/plugin-vue": "^6.0.3",
+    "hls.js": "^1.6.15",
+    "sass-embedded": "^1.98.0",
+    "stats.js": "^0.17.0",
+    "three-player-controller": "^0.3.1",
     "tsup": "^8.5.1",
     "typescript": "^5.0.0",
     "vite": "^7.3.1",
-    "vue": "^3.5.27",
-    "hls.js": "^1.6.15",
-    "stats.js": "^0.17.0",
-    "three-player-controller": "^0.3.1"
+    "vue": "^3.5.27"
   },
   "repository": {
     "type": "git",

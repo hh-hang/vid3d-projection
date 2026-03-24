@@ -1,5 +1,35 @@
 import * as THREE from "three";
 
+// 由四角点计算Homography矩阵（投影UV空间 → 视频UV空间）
+// corners 顺序：左下、右下、右上、左上，对应视频UV的 (0,0)(1,0)(1,1)(0,1)
+function computeQuadHomography(
+  corners: [[number, number], [number, number], [number, number], [number, number]],
+): THREE.Matrix3 {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = corners;
+  const dx1 = x1 - x2, dy1 = y1 - y2;
+  const dx2 = x3 - x2, dy2 = y3 - y2;
+  const dx3 = x0 - x1 + x2 - x3, dy3 = y0 - y1 + y2 - y3;
+  const den = dx1 * dy2 - dx2 * dy1;
+  const pg = (dx3 * dy2 - dx2 * dy3) / den;
+  const ph = (dx1 * dy3 - dx3 * dy1) / den;
+  // 单位正方形到四边形的变换矩阵H
+  const m00 = x1 - x0 + pg * x1, m01 = x3 - x0 + ph * x3, m02 = x0;
+  const m10 = y1 - y0 + pg * y1, m11 = y3 - y0 + ph * y3, m12 = y0;
+  const m20 = pg, m21 = ph, m22 = 1;
+  // 求逆矩阵（四边形到单位正方形）
+  const det =
+    m00 * (m11 * m22 - m12 * m21) -
+    m01 * (m10 * m22 - m12 * m20) +
+    m02 * (m10 * m21 - m11 * m20);
+  const inv = new THREE.Matrix3();
+  inv.set(
+    (m11 * m22 - m12 * m21) / det, -(m01 * m22 - m02 * m21) / det, (m01 * m12 - m02 * m11) / det,
+    -(m10 * m22 - m12 * m20) / det, (m00 * m22 - m02 * m20) / det, -(m00 * m12 - m02 * m10) / det,
+    (m10 * m21 - m11 * m20) / det, -(m00 * m21 - m01 * m20) / det, (m00 * m11 - m01 * m10) / det,
+  );
+  return inv;
+}
+
 export type ProjectorToolOptions = {
   scene: THREE.Scene;
   renderer: THREE.WebGLRenderer;
@@ -21,6 +51,8 @@ export type ProjectorToolOptions = {
   opacity?: number;
   projBias?: number;
   edgeFeather?: number;
+  cropRect?: [number, number, number, number];
+  quadCorners?: [[number, number], [number, number], [number, number], [number, number]];
   isShowHelper?: boolean;
 };
 
@@ -33,6 +65,8 @@ export type ProjectorTool = {
   updateElevationDeg: (deg: number) => void;
   updateRollDeg: (deg: number) => void;
   updateOpacity: (opacity: number) => void;
+  updateCropRect: (rect: [number, number, number, number]) => void;
+  updateQuadCorners: (corners: [[number, number], [number, number], [number, number], [number, number]]) => void;
   uniforms: any;
   overlays: THREE.Mesh[];
   targetMeshes: THREE.Mesh[];
@@ -60,6 +94,8 @@ export async function createVideoProjector(
     opacity = 1.0,
     projBias = 0.0001,
     edgeFeather = 0.05,
+    cropRect = [0, 0, 1, 1] as [number, number, number, number],
+    quadCorners = [[0, 0], [1, 0], [1, 1], [0, 1]] as [[number, number], [number, number], [number, number], [number, number]],
     isShowHelper = true,
   } = opts;
 
@@ -108,6 +144,8 @@ export async function createVideoProjector(
     projBias: { value: projBias },
     edgeFeather: { value: edgeFeather },
     opacity: { value: opacity },
+    cropRect: { value: new THREE.Vector4(cropRect[0], cropRect[1], cropRect[2], cropRect[3]) },
+    quadHomography: { value: computeQuadHomography(quadCorners) },
   };
 
   const vertexShader = `
@@ -129,6 +167,8 @@ export async function createVideoProjector(
       uniform float projBias;
       uniform float edgeFeather;
       uniform float opacity;
+      uniform vec4 cropRect;
+      uniform mat3 quadHomography;
       varying vec3 vWorldPos;
       varying vec3 vWorldNormal;
 
@@ -137,8 +177,7 @@ export async function createVideoProjector(
         if (projPos.w <= 0.0) discard;
         vec2 uv = projPos.xy / projPos.w * 0.5 + 0.5;
         if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) discard;
-        vec4 color = texture(projectorMap, uv);
-        
+
         // 遮挡剔除
         float projNDCz = projPos.z / projPos.w;
         float projDepth01 = projNDCz * 0.5 + 0.5;
@@ -147,13 +186,22 @@ export async function createVideoProjector(
           discard;
         }
 
-        // 边缘羽化
-        vec2 adjUV = uv;
-        float minDist = min(min(adjUV.x, 1.0 - adjUV.x), min(adjUV.y, 1.0 - adjUV.y));
+        // 四角点变换（投影UV → 视频纹理UV）
+        vec3 hw = quadHomography * vec3(uv, 1.0);
+        vec2 warpedUV = hw.xy / hw.z;
+
+        // 自定义裁剪及羽化
+        vec2 cropMin = cropRect.xy;
+        vec2 cropMax = cropRect.zw;
+        if (warpedUV.x < cropMin.x || warpedUV.x > cropMax.x || warpedUV.y < cropMin.y || warpedUV.y > cropMax.y) discard;
+        float distX = min(warpedUV.x - cropMin.x, cropMax.x - warpedUV.x);
+        float distY = min(warpedUV.y - cropMin.y, cropMax.y - warpedUV.y);
+        float minDist = min(distX, distY);
         float edgeFactor = 1.0;
         if (edgeFeather > 0.0) {
             edgeFactor = smoothstep(0.0, edgeFeather, minDist);
         }
+        vec4 color = texture(projectorMap, warpedUV);
         float effectiveAlpha = color.a * edgeFactor;
 
         // 输出
@@ -340,6 +388,18 @@ export async function createVideoProjector(
     projectorUniforms.opacity.value = clamped;
   }
 
+  // 更新裁剪区域（UV空间，[x0, y0, x1, y1]，范围 0~1）
+  function updateCropRect(rect: [number, number, number, number]) {
+    projectorUniforms.cropRect.value.set(rect[0], rect[1], rect[2], rect[3]);
+  }
+
+  // 更新四角点变换（投影UV空间，顺序：左下、右下、右上、左上）
+  function updateQuadCorners(
+    corners: [[number, number], [number, number], [number, number], [number, number]],
+  ) {
+    projectorUniforms.quadHomography.value.copy(computeQuadHomography(corners));
+  }
+
   return {
     addTargetMesh,
     removeTargetMesh,
@@ -349,6 +409,8 @@ export async function createVideoProjector(
     updateElevationDeg,
     updateRollDeg,
     updateOpacity,
+    updateCropRect,
+    updateQuadCorners,
     uniforms: projectorUniforms,
     overlays,
     targetMeshes,

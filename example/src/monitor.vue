@@ -147,6 +147,14 @@ onMounted(async () => {
     edgeFeather: projectorTool.uniforms.edgeFeather.value,
     videoAspect: projCam.aspect,
     isAutoOpacity: isAutoOpacity,
+    cropX0: projectorTool.uniforms.cropRect.value.x,
+    cropY0: projectorTool.uniforms.cropRect.value.y,
+    cropX1: projectorTool.uniforms.cropRect.value.z,
+    cropY1: projectorTool.uniforms.cropRect.value.w,
+    quadBLx: 0, quadBLy: 0,
+    quadBRx: 1, quadBRy: 0,
+    quadTRx: 1, quadTRy: 1,
+    quadTLx: 0, quadTLy: 1,
   };
 
   function updatePositionFromGUI() {
@@ -250,6 +258,73 @@ onMounted(async () => {
     .add(cfg, "projPosZ", -500, 500, 0.01)
     .name("Z")
     .onChange(updatePositionFromGUI);
+
+  // 裁剪区域
+  function updateCropFromGUI() {
+    projectorTool.updateCropRect([cfg.cropX0, cfg.cropY0, cfg.cropX1, cfg.cropY1]);
+  }
+
+  const cropFolder = gui.addFolder("裁剪区域(cropRect)");
+  cropFolder
+    .add(cfg, "cropX0", 0, 1, 0.01)
+    .name("左边界(x0)")
+    .onChange(updateCropFromGUI);
+  cropFolder
+    .add(cfg, "cropY0", 0, 1, 0.01)
+    .name("下边界(y0)")
+    .onChange(updateCropFromGUI);
+  cropFolder
+    .add(cfg, "cropX1", 0, 1, 0.01)
+    .name("右边界(x1)")
+    .onChange(updateCropFromGUI);
+  cropFolder
+    .add(cfg, "cropY1", 0, 1, 0.01)
+    .name("上边界(y1)")
+    .onChange(updateCropFromGUI);
+
+  // 四角点变换
+  function updateQuadFromGUI() {
+    projectorTool.updateQuadCorners([
+      [cfg.quadBLx, cfg.quadBLy],
+      [cfg.quadBRx, cfg.quadBRy],
+      [cfg.quadTRx, cfg.quadTRy],
+      [cfg.quadTLx, cfg.quadTLy],
+    ]);
+  }
+
+  const quadFolder = gui.addFolder("四角点变换(quadCorners)");
+  quadFolder
+    .add(cfg, "quadBLx", -0.5, 1.5, 0.001)
+    .name("左下X(BL.x)")
+    .onChange(updateQuadFromGUI);
+  quadFolder
+    .add(cfg, "quadBLy", -0.5, 1.5, 0.001)
+    .name("左下Y(BL.y)")
+    .onChange(updateQuadFromGUI);
+  quadFolder
+    .add(cfg, "quadBRx", -0.5, 1.5, 0.001)
+    .name("右下X(BR.x)")
+    .onChange(updateQuadFromGUI);
+  quadFolder
+    .add(cfg, "quadBRy", -0.5, 1.5, 0.001)
+    .name("右下Y(BR.y)")
+    .onChange(updateQuadFromGUI);
+  quadFolder
+    .add(cfg, "quadTRx", -0.5, 1.5, 0.001)
+    .name("右上X(TR.x)")
+    .onChange(updateQuadFromGUI);
+  quadFolder
+    .add(cfg, "quadTRy", -0.5, 1.5, 0.001)
+    .name("右上Y(TR.y)")
+    .onChange(updateQuadFromGUI);
+  quadFolder
+    .add(cfg, "quadTLx", -0.5, 1.5, 0.001)
+    .name("左上X(TL.x)")
+    .onChange(updateQuadFromGUI);
+  quadFolder
+    .add(cfg, "quadTLy", -0.5, 1.5, 0.001)
+    .name("左上Y(TL.y)")
+    .onChange(updateQuadFromGUI);
 
   projFolder.open();
   posFolder.open();

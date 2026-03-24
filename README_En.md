@@ -37,12 +37,6 @@ git clone https://github.com/hh-hang/three-video-projection.git
 # Install dependencies
 npm install
 
-# Navigate to the example directory
-cd example
-
-# Install example dependencies
-npm install
-
 # Start the development server
 npm run dev
 ```
@@ -88,6 +82,8 @@ const projector = await createVideoProjector({
   opacity: 1.0, // projection opacity
   projBias: 0.0001, // depth bias
   edgeFeather: 0.05, // edge feather amount
+  cropRect: [0, 0, 1, 1], // crop region in UV space [x0, y0, x1, y1], range 0–1
+  quadCorners: [[0, 0], [1, 0], [1, 1], [0, 1]], // quad corner warp (projection UV space, order: bottom-left, bottom-right, top-right, top-left)
   isShowHelper: true, // show CameraHelper for the projector
 });
 
@@ -126,6 +122,8 @@ projector.dispose();
 - `opacity?: number` — global opacity (0–1). Default: `1.0`.
 - `projBias?: number` — depth bias. Default: `0.0001`.
 - `edgeFeather?: number` — edge feather width. Default: `0.05`.
+- `cropRect?: [number, number, number, number]` — crop region of the video texture in UV space `[x0, y0, x1, y1]`, range `0–1`. Default: `[0, 0, 1, 1]` (no crop).
+- `quadCorners?: [[number, number], [number, number], [number, number], [number, number]]` — four-corner warp in projection UV space (order: bottom-left, bottom-right, top-right, top-left), used for keystone/perspective correction. Default: unit square.
 - `isShowHelper?: boolean` — show a `CameraHelper` to visualize the projector camera. Default: `true`.
 
 ---
@@ -142,10 +140,12 @@ projector.dispose();
 - `updateElevationDeg(deg: number): void` — set the elevation (degrees).
 - `updateRollDeg(deg: number): void` — set the roll (degrees).
 - `updateOpacity(opacity: number): void` — update projection opacity (0–1).
+- `updateCropRect(rect: [number, number, number, number]): void` — dynamically update the crop region (UV space, `[x0, y0, x1, y1]`).
+- `updateQuadCorners(corners: [[number, number], [number, number], [number, number], [number, number]]): void` — dynamically update the four-corner warp (projection UV space, order: bottom-left, bottom-right, top-right, top-left).
 
 **Properties:**
 
-- `uniforms` — exposed shader uniform object (contains `projectorMap`, `projectorDepthMap`, `projectorMatrix`, `intensity`, `projBias`, `edgeFeather`, `opacity`, etc.).
+- `uniforms` — exposed shader uniform object (contains `projectorMap`, `projectorDepthMap`, `projectorMatrix`, `intensity`, `projBias`, `edgeFeather`, `opacity`, `cropRect`, `quadHomography`, etc.).
 - `overlays: THREE.Mesh[]` — list of internal overlay meshes (used for rendering the projection).
 - `targetMeshes: THREE.Mesh[]` — current list of meshes being projected onto.
 - `projCam: THREE.PerspectiveCamera` — the projector camera.

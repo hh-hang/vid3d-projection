@@ -265,7 +265,7 @@ onMounted(async () => {
 
   const videoPosition = new Vector3(-0.13, 2.5, 2.33); // 仅作示例,具体位置需要计算
   const updateVolume = () => {
-    const distance = player.getposition().distanceTo(videoPosition);
+    const distance = player.getPosition()?.distanceTo(videoPosition) ?? 0;
     video.volume = Math.max(0, 1 - distance / 10);
   };
 
