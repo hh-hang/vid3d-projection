@@ -134,7 +134,7 @@ onMounted(async () => {
 
     // 初始化 GUI 控制面板
     gui = new GUI({ title: "投影相机控制" });
-
+ 
     const projGuiConfig = {
         intensity: 1.0,
         proFar: projectionConfig.far,
