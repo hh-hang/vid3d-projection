@@ -42,6 +42,8 @@ let CesiumProjectorTool: CesiumProjectorTool;
 let gui: GUI | null = null;
 
 onMounted(async () => {
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmMzgwMGY3ZS1jOTMwLTQyNmQtOTkyNS03MDE4ZjlkYmY0MTYiLCJpZCI6MjIzMDk3LCJpYXQiOjE3MTg3NjgwNTN9.FcpK7jiFPzWZL8m6VxRbG7ly8LMecpXnDAMZJX_UehM';
+
     viewer = new Cesium.Viewer("cesium-viewer", {
         infoBox: false,
         timeline: false,
