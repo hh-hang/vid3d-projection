@@ -8,11 +8,11 @@
 
 [![NPM Package][npm]][npm-url]
 
-基于 `three.js` 和 `Cesium` 的空间视频投影工具。仓库包含示例及源码。
+基于 `Three.js` 和 `Cesium.js` 的空间视频投影工具。仓库包含示例及源码。
 
 该工具支持：
 - Three.js：将 `THREE.VideoTexture` 从投影相机投影到场景中的目标模型上，支持深度遮挡剔除、边缘羽化、强度与透明度控制等。
-- Cesium：在 3D 地球场景中进行视频投影，支持地理坐标定位和投影变换。
+- Cesium.js：在 3D 地球场景中进行视频投影，支持地理坐标定位和投影变换。
 
 ---
 
@@ -109,7 +109,7 @@ animate();
 projector.dispose();
 ```
 
-### Cesium 示例
+### Cesium.js 示例
 
 ```ts
 import * as Cesium from "cesium";
@@ -196,7 +196,7 @@ projector.dispose();
 - `camHelper: THREE.CameraHelper | null` — 可选的相机辅助器实例。
 - `orientationParams` — 当前的方位/俯仰/滚转角（度）。
 
-### Cesium API
+### Cesium.js API
 
 #### `createCesiumVideoProjector(opts: CesiumProjectorOptions): Promise<CesiumProjectorTool>`
 

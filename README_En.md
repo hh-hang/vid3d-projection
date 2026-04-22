@@ -8,11 +8,11 @@
 
 [![NPM Package][npm]][npm-url]
 
-A spatial video projection utility for **Three.js** and **Cesium**.
+A spatial video projection utility for **Three.js** and **Cesium.js**.
 
 > This tool supports:
 > - Three.js: Projects `THREE.VideoTexture` from a projection camera onto target models in the scene, with support for depth-based occlusion, edge feathering, intensity and opacity controls, and more.
-> - Cesium: Enables video projection in 3D globe scenes, supporting geographic coordinate positioning and projection transformations.
+> - Cesium.js: Enables video projection in 3D globe scenes, supporting geographic coordinate positioning and projection transformations.
 
 ---
 
@@ -109,7 +109,7 @@ animate();
 projector.dispose();
 ```
 
-### Cesium Example
+### Cesium.js Example
 
 ```ts
 import * as Cesium from "cesium";
