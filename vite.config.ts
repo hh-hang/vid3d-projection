@@ -6,7 +6,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
     plugins: [vue(), glsl(), cesium()],
-    base: "./",
+    base: "/vid3d-projection/",
     root: "example",
     resolve: {
         alias: {

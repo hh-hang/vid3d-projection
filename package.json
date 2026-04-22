@@ -27,6 +27,11 @@
     "README.md"
   ],
   "keywords": [
+    "threejs",
+    "cesium",
+    "cesiumjs",
+    "webgl",
+    "spatial-video",
     "videoProjection",
     "videoFusion"
   ],
