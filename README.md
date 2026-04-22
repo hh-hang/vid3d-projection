@@ -4,13 +4,15 @@
 
 ---
 
-# three-video-projector
+# vid3d-projection
 
 [![NPM Package][npm]][npm-url]
 
-基于 `three.js` 的视频投影工具。仓库包含示例及源码。
+基于 `three.js` 和 `Cesium` 的空间视频投影工具。仓库包含示例及源码。
 
-该工具将 `THREE.VideoTexture` 从一个投影相机投影到场景中的目标模型上，支持深度遮挡剔除、边缘羽化、强度与透明度控制等。
+该工具支持：
+- Three.js：将 `THREE.VideoTexture` 从投影相机投影到场景中的目标模型上，支持深度遮挡剔除、边缘羽化、强度与透明度控制等。
+- Cesium：在 3D 地球场景中进行视频投影，支持地理坐标定位和投影变换。
 
 ---
 
@@ -18,13 +20,17 @@
 
 点击图片查看在线演示：
 
-### 视频融合
+### Three.js 视频融合
 
-[![视频融合](https://raw.githubusercontent.com/hh-hang/three-video-projection/main/example/public/imgs/2.gif "点击查看视频融合示例")](https://hh-hang.github.io/three-video-projection/monitor.html)
+[![Three.js 视频融合](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/2.gif "点击查看 Three.js 视频融合示例")](https://hh-hang.github.io/vid3d-projection/three-monitor.html)
 
-### 电影院
+### Three.js 电影院
 
-[![电影院](https://raw.githubusercontent.com/hh-hang/three-video-projection/main/example/public/imgs/1.gif "点击查看电影院示例")](https://hh-hang.github.io/three-video-projection/cinema.html)
+[![Three.js 电影院](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/1.gif "点击查看电影院示例")](https://hh-hang.github.io/vid3d-projection/three-cinema.html)
+
+### Cesium.js 视频融合
+
+[![Cesium.js 视频融合](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/3.gif "点击查看 Cesium.js 视频融合示例")](https://hh-hang.github.io/vid3d-projection/cesium-monitor.html)
 
 ---
 
@@ -32,7 +38,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/hh-hang/three-video-projection.git
+git clone https://github.com/hh-hang/vid3d-projection.git
 
 # 安装依赖
 npm install
@@ -48,16 +54,16 @@ npm run dev
 ## 安装
 
 ```bash
-npm install three-video-projection
+npm install vid3d-projection
 ```
-
----
 
 ## 快速开始
 
+### Three.js 示例
+
 ```ts
 import * as THREE from "three";
-import { createVideoProjector } from "three-video-projection";
+import { createThreeVideoProjector } from "vid3d-projection/three";
 
 // 创建video元素并生成 VideoTexture
 const video = document.createElement("video");
@@ -71,7 +77,7 @@ const videoTexture = new THREE.VideoTexture(video);
 // 注：可以使用视频流，只要保证最后成功创建videoTexture
 
 // 创建投影器
-const projector = await createVideoProjector({
+const projector = await createThreeVideoProjector({
   scene, // three 场景
   renderer, // three 渲染器
   videoTexture, // 视频纹理
@@ -103,13 +109,53 @@ animate();
 projector.dispose();
 ```
 
+### Cesium 示例
+
+```ts
+import * as Cesium from "cesium";
+import { createCesiumVideoProjector } from "vid3d-projection/cesium";
+
+// 创建video元素
+const video = document.createElement("video");
+video.src = "path/to/video.mp4";
+video.loop = true;
+video.muted = true;
+video.playsInline = true;
+await video.play();
+
+// 创建Cesium视图
+const viewer = new Cesium.Viewer("cesiumContainer");
+
+// 创建投影器
+const projector = await createCesiumVideoProjector({
+  viewer, // Cesium Viewer实例
+  video, // 视频元素
+  position: Cesium.Cartesian3.fromDegrees(116.3974, 39.9093, 100), // 投影位置（经纬度高度）
+  orientation: {
+    heading: Cesium.Math.toRadians(0), // 方位角
+    pitch: Cesium.Math.toRadians(-30), // 俯仰角
+    roll: 0 // 滚转角
+  },
+  fov: 45, // 视场角
+  aspectRatio: 16 / 9, // 宽高比
+  intensity: 1.0, // 投影强度
+  opacity: 1.0, // 投影透明度
+  edgeFeather: 0.05, // 边缘羽化程度
+});
+
+// 销毁时
+projector.dispose();
+```
+
 ---
 
 ## API
 
-### createVideoProjector(opts: ProjectorToolOptions): Promise<ProjectorTool>
+### Three.js API
 
-#### ProjectorToolOptions
+#### `createThreeVideoProjector(opts: ThreeProjectorToolOptions): Promise<ThreeProjectorTool>`
+
+##### ThreeProjectorToolOptions
 
 - `scene: THREE.Scene` — three 场景（必需）。
 - `renderer: THREE.WebGLRenderer` — three 渲染器（必需）。
@@ -126,9 +172,7 @@ projector.dispose();
 - `quadCorners?: [[number, number], [number, number], [number, number], [number, number]]` — 四角点变换，在投影 UV 空间中指定四角坐标（顺序：左下、右下、右上、左上），用于梯形/透视校正。默认为单位正方形。
 - `isShowHelper?: boolean` — 是否显示 `CameraHelper` 来可视化投影相机，默认 `true`。
 
----
-
-#### ProjectorTool (返回对象)
+##### ThreeProjectorTool (返回对象)
 
 方法：
 
@@ -152,7 +196,32 @@ projector.dispose();
 - `camHelper: THREE.CameraHelper | null` — 可选的相机辅助器实例。
 - `orientationParams` — 当前的方位/俯仰/滚转角（度）。
 
+### Cesium API
+
+#### `createCesiumVideoProjector(opts: CesiumProjectorOptions): Promise<CesiumProjectorTool>`
+
+##### CesiumProjectorOptions
+
+- `viewer: Cesium.Viewer` — Cesium Viewer 实例（必需）。
+- `video: HTMLVideoElement` — 视频元素（必需）。
+- `position: Cesium.Cartesian3` — 投影位置（必需）。
+- `orientation: { heading: number; pitch: number; roll: number }` — 投影方向（弧度）。
+- `fov: number` — 视场角（度），默认 `45`。
+- `aspectRatio: number` — 宽高比，默认 `16/9`。
+- `intensity: number` — 投影强度，默认 `1.0`。
+- `opacity: number` — 投影透明度，默认 `1.0`。
+- `edgeFeather: number` — 边缘羽化程度，默认 `0.05`。
+
+##### CesiumProjectorTool (返回对象)
+
+方法：
+
+- `updatePosition(position: Cesium.Cartesian3): void` — 更新投影位置。
+- `updateOrientation(orientation: { heading: number; pitch: number; roll: number }): void` — 更新投影方向。
+- `updateOpacity(opacity: number): void` — 更新投影透明度。
+- `dispose(): void` — 销毁投影器并清理资源。
+
 ---
 
-[npm]: https://img.shields.io/npm/v/three-video-projection
-[npm-url]: https://www.npmjs.com/package/three-video-projection
+[npm]: https://img.shields.io/npm/v/vid3d-projection
+[npm-url]: https://www.npmjs.com/package/vid3d-projection

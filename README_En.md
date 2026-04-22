@@ -4,13 +4,15 @@
 
 ---
 
-# three-video-projector
+# vid3d-projection
 
 [![NPM Package][npm]][npm-url]
 
-A video projection tool built on **three.js**.
+A spatial video projection utility for **Three.js** and **Cesium**.
 
-> This tool projects a `THREE.VideoTexture` from a projection camera onto target models in the scene. It supports depth-based occlusion (so projections won't show through geometry), edge feathering, intensity and opacity controls, and more.
+> This tool supports:
+> - Three.js: Projects `THREE.VideoTexture` from a projection camera onto target models in the scene, with support for depth-based occlusion, edge feathering, intensity and opacity controls, and more.
+> - Cesium: Enables video projection in 3D globe scenes, supporting geographic coordinate positioning and projection transformations.
 
 ---
 
@@ -18,13 +20,17 @@ A video projection tool built on **three.js**.
 
 Click on the images to view the live demos:
 
-### Video Fusion
+### Three.js Video Fusion
 
-[![Video Fusion](https://raw.githubusercontent.com/hh-hang/three-video-projection/main/example/public/imgs/2.gif "Click to view Video Fusion demo")](https://hh-hang.github.io/three-video-projection/monitor.html)
+[![Three.js Video Fusion](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/2.gif "Click to view Three.js Video Fusion demo")](https://hh-hang.github.io/vid3d-projection/three-monitor.html)
 
-### Cinema
+### Three.js Cinema
 
-[![Cinema](https://raw.githubusercontent.com/hh-hang/three-video-projection/main/example/public/imgs/1.gif "Click to view Cinema demo")](https://hh-hang.github.io/three-video-projection/cinema.html)
+[![Three.js Cinema](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/1.gif "Click to view Cinema demo")](https://hh-hang.github.io/vid3d-projection/three-cinema.html)
+
+### Cesium.js Video Fusion
+
+[![Cesium.js Video Fusion](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/3.gif "Click to view Cesium.js Video Fusion demo")](https://hh-hang.github.io/vid3d-projection/cesium-monitor.html)
 
 ---
 
@@ -32,7 +38,7 @@ Click on the images to view the live demos:
 
 ```bash
 # Clone the repository
-git clone https://github.com/hh-hang/three-video-projection.git
+git clone https://github.com/hh-hang/vid3d-projection.git
 
 # Install dependencies
 npm install
@@ -48,16 +54,16 @@ Then open your browser and visit `http://localhost:5173` to view the examples.
 ## Installation
 
 ```bash
-npm install three-video-projection
+npm install vid3d-projection
 ```
-
----
 
 ## Quick start
 
+### Three.js Example
+
 ```ts
 import * as THREE from "three";
-import { createVideoProjector } from "three-video-projection";
+import { createThreeVideoProjector } from "vid3d-projection/three";
 
 // Create a video element and a VideoTexture
 const video = document.createElement("video");
@@ -71,7 +77,7 @@ const videoTexture = new THREE.VideoTexture(video);
 // Note: you can also use a video stream as long as a VideoTexture is successfully created.
 
 // Create the projector
-const projector = await createVideoProjector({
+const projector = await createThreeVideoProjector({
   scene, // three.js Scene
   renderer, // three.js WebGLRenderer
   videoTexture, // the video texture to project
@@ -103,13 +109,53 @@ animate();
 projector.dispose();
 ```
 
+### Cesium Example
+
+```ts
+import * as Cesium from "cesium";
+import { createCesiumVideoProjector } from "vid3d-projection/cesium";
+
+// Create a video element
+const video = document.createElement("video");
+video.src = "path/to/video.mp4";
+video.loop = true;
+video.muted = true;
+video.playsInline = true;
+await video.play();
+
+// Create Cesium viewer
+const viewer = new Cesium.Viewer("cesiumContainer");
+
+// Create the projector
+const projector = await createCesiumVideoProjector({
+  viewer, // Cesium Viewer instance
+  video, // video element
+  position: Cesium.Cartesian3.fromDegrees(116.3974, 39.9093, 100), // projection position (longitude, latitude, height)
+  orientation: {
+    heading: Cesium.Math.toRadians(0), // heading angle
+    pitch: Cesium.Math.toRadians(-30), // pitch angle
+    roll: 0 // roll angle
+  },
+  fov: 45, // field of view
+  aspectRatio: 16 / 9, // aspect ratio
+  intensity: 1.0, // projection intensity
+  opacity: 1.0, // projection opacity
+  edgeFeather: 0.05, // edge feather amount
+});
+
+// Dispose when done
+projector.dispose();
+```
+
 ---
 
 ## API
 
-### `createVideoProjector(opts: ProjectorToolOptions): Promise<ProjectorTool>`
+### Three.js API
 
-#### `ProjectorToolOptions`
+#### `createThreeVideoProjector(opts: ThreeProjectorToolOptions): Promise<ThreeProjectorTool>`
+
+##### `ThreeProjectorToolOptions`
 
 - `scene: THREE.Scene` — the three.js scene (required).
 - `renderer: THREE.WebGLRenderer` — the renderer (required).
@@ -126,9 +172,7 @@ projector.dispose();
 - `quadCorners?: [[number, number], [number, number], [number, number], [number, number]]` — four-corner warp in projection UV space (order: bottom-left, bottom-right, top-right, top-left), used for keystone/perspective correction. Default: unit square.
 - `isShowHelper?: boolean` — show a `CameraHelper` to visualize the projector camera. Default: `true`.
 
----
-
-#### `ProjectorTool` (returned object)
+##### `ThreeProjectorTool` (returned object)
 
 **Methods:**
 
@@ -152,7 +196,32 @@ projector.dispose();
 - `camHelper: THREE.CameraHelper | null` — optional CameraHelper instance.
 - `orientationParams` — current azimuth/elevation/roll (degrees).
 
+### Cesium API
+
+#### `createCesiumVideoProjector(opts: CesiumProjectorOptions): Promise<CesiumProjectorTool>`
+
+##### `CesiumProjectorOptions`
+
+- `viewer: Cesium.Viewer` — Cesium Viewer instance (required).
+- `video: HTMLVideoElement` — video element (required).
+- `position: Cesium.Cartesian3` — projection position (required).
+- `orientation: { heading: number; pitch: number; roll: number }` — projection orientation (radians).
+- `fov: number` — field of view (degrees), default `45`.
+- `aspectRatio: number` — aspect ratio, default `16/9`.
+- `intensity: number` — projection intensity, default `1.0`.
+- `opacity: number` — projection opacity, default `1.0`.
+- `edgeFeather: number` — edge feather amount, default `0.05`.
+
+##### `CesiumProjectorTool` (returned object)
+
+**Methods:**
+
+- `updatePosition(position: Cesium.Cartesian3): void` — update projection position.
+- `updateOrientation(orientation: { heading: number; pitch: number; roll: number }): void` — update projection orientation.
+- `updateOpacity(opacity: number): void` — update projection opacity.
+- `dispose(): void` — destroy projector and clean up resources.
+
 ---
 
-[npm]: https://img.shields.io/npm/v/three-video-projection
-[npm-url]: https://www.npmjs.com/package/three-video-projection
+[npm]: https://img.shields.io/npm/v/vid3d-projection
+[npm-url]: https://www.npmjs.com/package/vid3d-projection

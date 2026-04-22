@@ -1,7 +1,7 @@
 {
-  "name": "three-video-projection",
-  "version": "0.1.0",
-  "description": "Projector utility for projecting video textures onto meshes (three.js)",
+  "name": "vid3d-projection",
+  "version": "0.2.0",
+  "description": "Spatial video projection utility for Three.js and Cesium",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,13 +10,23 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./three": {
+      "types": "./dist/three.d.ts",
+      "import": "./dist/three.js",
+      "require": "./dist/three.cjs"
+    },
+    "./cesium": {
+      "types": "./dist/cesium.d.ts",
+      "import": "./dist/cesium.js",
+      "require": "./dist/cesium.cjs"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "keywords": [
-    "three",
     "videoProjection",
     "videoFusion"
   ],
@@ -29,24 +39,37 @@
     "build:example": "vite build && node -e \"require('fs').writeFileSync('docs/.nojekyll', '')\""
   },
   "peerDependencies": {
-    "three": "^0.182.0"
+    "cesium": ">=1.100.0",
+    "three": ">=0.160.0"
+  },
+  "peerDependenciesMeta": {
+    "three": {
+      "optional": true
+    },
+    "cesium": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^25.0.10",
     "@types/three": "^0.182.0",
     "@vitejs/plugin-vue": "^6.0.3",
+    "cesium": "^1.140.0",
     "hls.js": "^1.6.15",
+    "prettier": "^3.8.3",
     "sass-embedded": "^1.98.0",
     "stats.js": "^0.17.0",
     "three-player-controller": "^0.3.1",
     "tsup": "^8.5.1",
     "typescript": "^5.0.0",
     "vite": "^7.3.1",
+    "vite-plugin-cesium": "^1.2.23",
+    "vite-plugin-glsl": "^1.6.0",
     "vue": "^3.5.27"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hh-hang/three-video-projection"
+    "url": "https://github.com/hh-hang/vid3d-projection"
   },
-  "homepage": "https://hh-hang.github.io/three-video-projection/"
+  "homepage": "https://hh-hang.github.io/vid3d-projection/"
 }
