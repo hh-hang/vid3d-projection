@@ -38,7 +38,7 @@
   "author": "hh-hang",
   "license": "MIT",
   "scripts": {
-    "dev": "vite example",
+    "dev": "vite",
     "build": "tsup",
     "prepare": "npm run build",
     "build:example": "vite build && node -e \"require('fs').writeFileSync('docs/.nojekyll', '')\""
