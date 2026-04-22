@@ -1,12 +1,11 @@
 import path from "path";
 import vue from "@vitejs/plugin-vue";
 import glsl from "vite-plugin-glsl";
-import cesium from "vite-plugin-cesium";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-    plugins: [vue(), glsl(), cesium()],
-    base: "/vid3d-projection/",
+    plugins: [vue(), glsl()],
+    base: "./vid3d-projection/",
     root: "example",
     resolve: {
         alias: {

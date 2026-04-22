@@ -24,6 +24,8 @@ import {
 } from "../../src/cesium-video-projection";
 import Hls from "hls.js";
 
+(window as any).CESIUM_BASE_URL = '/CesiumUnminified/';
+
 const projectionConfig = {
     lon: 5.105393631024482,
     lat: 52.09300904272346,
