@@ -35,6 +35,24 @@ const projectionConfig = {
     near: 0.1,
     fov: 36,
     aspect: 1,
+    intensity: 1.0,
+    edgeFeather: 0.05,
+    projBias: 0.0001,
+    showHelpers: false,
+    isAutoOpacity: false,
+    opacity: 1,
+    cropX0: 0,
+    cropY0: 0,
+    cropX1: 1,
+    cropY1: 1,
+    quadBLx: 0,
+    quadBLy: 0,
+    quadBRx: 1,
+    quadBRy: 0,
+    quadTRx: 1,
+    quadTRy: 1,
+    quadTLx: 0,
+    quadTLy: 1,
 };
 
 let viewer: Cesium.Viewer | null = null;
@@ -128,44 +146,18 @@ onMounted(async () => {
             rollDeg: projectionConfig.roll,
         },
         source: video,
-        isShowHelper: false,
-        opacity: 1,
+        intensity: projectionConfig.intensity,
+        projBias: projectionConfig.projBias,
+        edgeFeather: projectionConfig.edgeFeather,
+        isShowHelper: projectionConfig.showHelpers,
+        opacity: projectionConfig.opacity,
     });
 
     // 初始化 GUI 控制面板
     gui = new GUI({ title: "投影相机控制" });
  
-    const projGuiConfig = {
-        intensity: 1.0,
-        proFar: projectionConfig.far,
-        proNear: projectionConfig.near,
-        projFov: projectionConfig.fov,
-        edgeFeather: 0.05,
-        projBias: 0.0001,
-        videoAspect: 1.0,
-        azimuthDeg: projectionConfig.heading,
-        elevationDeg: projectionConfig.pitch,
-        rollDeg: projectionConfig.roll,
-        showHelpers: false,
-        isAutoOpacity: false,
-        opacity: 1,
-        lon: projectionConfig.lon,
-        lat: projectionConfig.lat,
-        hei: projectionConfig.hei,
-        cropX0: 0,
-        cropY0: 0,
-        cropX1: 1,
-        cropY1: 1,
-        quadBLx: 0,
-        quadBLy: 0,
-        quadBRx: 1,
-        quadBRy: 0,
-        quadTRx: 1,
-        quadTRy: 1,
-        quadTLx: 0,
-        quadTLy: 1,
-    };
-    let isAutoOpacity = projGuiConfig.isAutoOpacity;
+
+    let isAutoOpacity = projectionConfig.isAutoOpacity;
 
     // 根据距离设置透明度
     function setOpacityByDistance() {
@@ -182,79 +174,79 @@ onMounted(async () => {
 
     const projFolder = gui.addFolder("投影参数");
     projFolder
-        .add(projGuiConfig, "intensity", 0, 3, 0.01)
+        .add(projectionConfig, "intensity", 0, 3, 0.01)
         .name("投影强度(intensity)")
         .onChange((v: number) => {
             CesiumProjectorTool.intensity = v;
         });
     projFolder
-        .add(projGuiConfig, "proFar", 1, 500, 10)
+        .add(projectionConfig, "far", 1, 500, 10)
         .name("(远裁剪)far")
         .onChange((v: number) => {
             CesiumProjectorTool.far = v;
         });
     projFolder
-        .add(projGuiConfig, "proNear", 0.01, 10, 0.1)
+        .add(projectionConfig, "near", 0.01, 10, 0.1)
         .name("(近裁剪)near")
         .onChange((v: number) => {
             CesiumProjectorTool.near = v;
         });
     projFolder
-        .add(projGuiConfig, "projFov", 1, 120, 0.1)
+        .add(projectionConfig, "fov", 1, 120, 0.1)
         .name("投影视场角(FOV)")
         .onChange((v: number) => {
             CesiumProjectorTool.fov = v;
         });
     projFolder
-        .add(projGuiConfig, "edgeFeather", 0, 0.5, 0.001)
+        .add(projectionConfig, "edgeFeather", 0, 0.5, 0.001)
         .name("边缘羽化(edgeFeather)")
         .onChange((v: number) => {
             CesiumProjectorTool.edgeFeather = v;
         });
     projFolder
-        .add(projGuiConfig, "videoAspect", 0.1, 10, 0.01)
+        .add(projectionConfig, "aspect", 0.1, 10, 0.01)
         .name("视频宽高比(aspect)")
         .onChange((v: number) => {
             CesiumProjectorTool.aspect = v;
         });
     projFolder
-        .add(projGuiConfig, "azimuthDeg", -180, 180, 0.1)
+        .add(projectionConfig, "heading", -180, 180, 0.1)
         .name("方位角(azimuth)")
         .onChange((v: number) => {
             CesiumProjectorTool.azimuthDeg = v;
         });
     projFolder
-        .add(projGuiConfig, "elevationDeg", -89, 89, 0.1)
+        .add(projectionConfig, "pitch", -89, 89, 0.1)
         .name("俯仰角(elevation)")
         .onChange((v: number) => {
             CesiumProjectorTool.elevationDeg = v;
         });
     projFolder
-        .add(projGuiConfig, "rollDeg", -180, 180, 0.1)
+        .add(projectionConfig, "roll", -180, 180, 0.1)
         .name("横滚(roll)")
         .onChange((v: number) => {
             CesiumProjectorTool.rollDeg = v;
         });
     projFolder
-        .add(projGuiConfig, "projBias", 0, 0.01, 0.0001)
+        .add(projectionConfig, "projBias", 0, 0.01, 0.0001)
         .name("深度偏移(bias)")
         .onChange((v: number) => {
             CesiumProjectorTool.projBias = v;
         });
     projFolder
-        .add(projGuiConfig, "opacity", 0, 1, 0.01)
+        .add(projectionConfig, "opacity", 0, 1, 0.01)
         .name("透明度(opacity)")
         .onChange((v: number) => {
             CesiumProjectorTool.opacity = v;
         });
     projFolder
-        .add(projGuiConfig, "showHelpers")
+        .add(projectionConfig, "showHelpers")
         .name("相机辅助器(helpers)")
         .onChange((v: boolean) => {
             CesiumProjectorTool.isShowHelper = v;
         });
     projFolder
-        .add(projGuiConfig, "isAutoOpacity")
+        .add(projectionConfig, "isAutoOpacity")
         .name("自动调节透明度")
         .onChange((v: boolean) => {
             isAutoOpacity = v;
@@ -264,93 +256,93 @@ onMounted(async () => {
     const posFolder = gui.addFolder("相机坐标(position)");
     const updatePosition = () => {
         CesiumProjectorTool.cameraPosition = [
-            projGuiConfig.lon,
-            projGuiConfig.lat,
-            projGuiConfig.hei,
+            projectionConfig.lon,
+            projectionConfig.lat,
+            projectionConfig.hei,
         ];
     };
     posFolder
-        .add(projGuiConfig, "lon", 5.0987, 5.1187, 0.00001)
+        .add(projectionConfig, "lon", 5.0987, 5.1187, 0.00001)
         .name("经度(lon)")
         .onChange(updatePosition);
     posFolder
-        .add(projGuiConfig, "lat", 52.0857, 52.1057, 0.00001)
+        .add(projectionConfig, "lat", 52.0857, 52.1057, 0.00001)
         .name("纬度(lat)")
         .onChange(updatePosition);
     posFolder
-        .add(projGuiConfig, "hei", 0, 100, 0.1)
+        .add(projectionConfig, "hei", 0, 100, 0.1)
         .name("高度(hei)")
         .onChange(updatePosition);
         
     // 裁剪区域
     function updateCropFromGUI() {
         CesiumProjectorTool.cropRect = [
-            projGuiConfig.cropX0,
-            projGuiConfig.cropY0,
-            projGuiConfig.cropX1,
-            projGuiConfig.cropY1,
+            projectionConfig.cropX0,
+            projectionConfig.cropY0,
+            projectionConfig.cropX1,
+            projectionConfig.cropY1,
         ];
     }
 
     const cropFolder = gui.addFolder("裁剪区域(cropRect)");
     cropFolder
-        .add(projGuiConfig, "cropX0", 0, 1, 0.01)
+        .add(projectionConfig, "cropX0", 0, 1, 0.01)
         .name("左边界(x0)")
         .onChange(updateCropFromGUI);
     cropFolder
-        .add(projGuiConfig, "cropY0", 0, 1, 0.01)
+        .add(projectionConfig, "cropY0", 0, 1, 0.01)
         .name("下边界(y0)")
         .onChange(updateCropFromGUI);
     cropFolder
-        .add(projGuiConfig, "cropX1", 0, 1, 0.01)
+        .add(projectionConfig, "cropX1", 0, 1, 0.01)
         .name("右边界(x1)")
         .onChange(updateCropFromGUI);
     cropFolder
-        .add(projGuiConfig, "cropY1", 0, 1, 0.01)
+        .add(projectionConfig, "cropY1", 0, 1, 0.01)
         .name("上边界(y1)")
         .onChange(updateCropFromGUI);
 
     // 四角点变换
     function updateQuadFromGUI() {
         CesiumProjectorTool.quadCorners = [
-            [projGuiConfig.quadBLx, projGuiConfig.quadBLy],
-            [projGuiConfig.quadBRx, projGuiConfig.quadBRy],
-            [projGuiConfig.quadTRx, projGuiConfig.quadTRy],
-            [projGuiConfig.quadTLx, projGuiConfig.quadTLy],
+            [projectionConfig.quadBLx, projectionConfig.quadBLy],
+            [projectionConfig.quadBRx, projectionConfig.quadBRy],
+            [projectionConfig.quadTRx, projectionConfig.quadTRy],
+            [projectionConfig.quadTLx, projectionConfig.quadTLy],
         ];
     }
 
     const quadFolder = gui.addFolder("四角点变换(quadCorners)");
     quadFolder
-        .add(projGuiConfig, "quadBLx", -0.5, 1.5, 0.001)
+        .add(projectionConfig, "quadBLx", -0.5, 1.5, 0.001)
         .name("左下X(BL.x)")
         .onChange(updateQuadFromGUI);
     quadFolder
-        .add(projGuiConfig, "quadBLy", -0.5, 1.5, 0.001)
+        .add(projectionConfig, "quadBLy", -0.5, 1.5, 0.001)
         .name("左下Y(BL.y)")
         .onChange(updateQuadFromGUI);
     quadFolder
-        .add(projGuiConfig, "quadBRx", -0.5, 1.5, 0.001)
+        .add(projectionConfig, "quadBRx", -0.5, 1.5, 0.001)
         .name("右下X(BR.x)")
         .onChange(updateQuadFromGUI);
     quadFolder
-        .add(projGuiConfig, "quadBRy", -0.5, 1.5, 0.001)
+        .add(projectionConfig, "quadBRy", -0.5, 1.5, 0.001)
         .name("右下Y(BR.y)")
         .onChange(updateQuadFromGUI);
     quadFolder
-        .add(projGuiConfig, "quadTRx", -0.5, 1.5, 0.001)
+        .add(projectionConfig, "quadTRx", -0.5, 1.5, 0.001)
         .name("右上X(TR.x)")
         .onChange(updateQuadFromGUI);
     quadFolder
-        .add(projGuiConfig, "quadTRy", -0.5, 1.5, 0.001)
+        .add(projectionConfig, "quadTRy", -0.5, 1.5, 0.001)
         .name("右上Y(TR.y)")
         .onChange(updateQuadFromGUI);
     quadFolder
-        .add(projGuiConfig, "quadTLx", -0.5, 1.5, 0.001)
+        .add(projectionConfig, "quadTLx", -0.5, 1.5, 0.001)
         .name("左上X(TL.x)")
         .onChange(updateQuadFromGUI);
     quadFolder
-        .add(projGuiConfig, "quadTLy", -0.5, 1.5, 0.001)
+        .add(projectionConfig, "quadTLy", -0.5, 1.5, 0.001)
         .name("左上Y(TL.y)")
         .onChange(updateQuadFromGUI);
 });
