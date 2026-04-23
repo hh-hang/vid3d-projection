@@ -1,7 +1,5 @@
 [English](README_En.md)
 
-⭐ 开源不易，点个Star支持下吧 ⭐
-
 ---
 
 # vid3d-projection
