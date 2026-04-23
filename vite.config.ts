@@ -4,9 +4,12 @@ import glsl from "vite-plugin-glsl";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-    plugins: [vue(), glsl()],
     base: "/vid3d-projection/",
     root: "example",
+    define: {
+        CESIUM_BASE_URL: JSON.stringify("/vid3d-projection/cesium/"),
+    },
+    plugins: [vue(), glsl()],
     resolve: {
         alias: {
             "vid3d-projection": path.resolve(__dirname, "src/index.ts"),

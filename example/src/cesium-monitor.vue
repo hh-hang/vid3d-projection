@@ -24,8 +24,6 @@ import {
 } from "../../src/cesium-video-projection";
 import Hls from "hls.js";
 
-(window as any).CESIUM_BASE_URL = '/CesiumUnminified/';
-
 const projectionConfig = {
     lon: 5.105393631024482,
     lat: 52.09300904272346,
@@ -44,8 +42,6 @@ let CesiumProjectorTool: CesiumProjectorTool;
 let gui: GUI | null = null;
 
 onMounted(async () => {
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmMzgwMGY3ZS1jOTMwLTQyNmQtOTkyNS03MDE4ZjlkYmY0MTYiLCJpZCI6MjIzMDk3LCJpYXQiOjE3MTg3NjgwNTN9.FcpK7jiFPzWZL8m6VxRbG7ly8LMecpXnDAMZJX_UehM';
-
     viewer = new Cesium.Viewer("cesium-viewer", {
         infoBox: false,
         timeline: false,
