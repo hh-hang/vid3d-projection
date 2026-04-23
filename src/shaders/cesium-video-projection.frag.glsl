@@ -11,6 +11,8 @@ uniform sampler2D videoTexture;
 uniform mat4 shadowMapMatrix;
 uniform vec4 shadowMap_texelSizeDepthBiasAndNormalShadingSmooth;
 uniform float featherAmount;
+uniform vec4 cropRect;
+uniform mat3 quadHomography;
 
 in vec2 v_textureCoordinates;
 out vec4 czm_FragColor;
@@ -31,16 +33,6 @@ float getDepth(in vec4 depth) {
     return (2.0 * z_window - n_range - f_range) / (f_range - n_range);
 }
 
-// 采样阴影图
-float _czm_sampleShadowMap(sampler2D shadowMap, vec2 uv) {
-    return texture(shadowMap, uv).r;
-}
-
-// 比较深度值
-float _czm_shadowDepthCompare(sampler2D shadowMap, vec2 uv, float depth) {
-    return step(depth, _czm_sampleShadowMap(shadowMap, uv));
-}
-
 // 计算阴影可见性
 float _czm_shadowVisibility(sampler2D shadowMap, czm_shadowParameters shadowParameters) {
     float depthBias = shadowParameters.depthBias;
@@ -57,18 +49,12 @@ float _czm_shadowVisibility(sampler2D shadowMap, czm_shadowParameters shadowPara
     for (float x = -radius; x <= radius; x += 1.0) {
         for (float y = -radius; y <= radius; y += 1.0) {
             vec2 offset = vec2(x * texelStepSize.x, y * texelStepSize.y);
-            visibility += _czm_shadowDepthCompare(shadowMap, uv + offset, depth);
+            // 检查是否超出范围
+            visibility += step(depth, texture(shadowMap, uv + offset).r);
             sampleCount += 1.0;
         }
     }
     return visibility / sampleCount;
-}
-
-// 计算边缘羽化强度
-float getFeatherAlpha(vec2 uv, float featherAmount) {
-    float edgeDist = min(uv.x, 1.0 - uv.x);
-    edgeDist = min(edgeDist, min(uv.y, 1.0 - uv.y));
-    return smoothstep(0.0, featherAmount, edgeDist);
 }
 
 void main() {
@@ -95,13 +81,30 @@ void main() {
 
     // 可见性与纹理采样
     float visibility = _czm_shadowVisibility(shadowMapTexture, shadowParameters);
-    vec4 videoColor = texture(videoTexture, shadowPosition.xy);
-    float featherAlpha = getFeatherAlpha(shadowPosition.xy, featherAmount);
+
+    // 应用四角变换
+    vec3 projCoords = vec3(shadowPosition.xy, 1.0);
+    projCoords = quadHomography * projCoords;
+    projCoords /= projCoords.z;
+
+    // 检查裁剪区域
+    if (projCoords.x < cropRect.x || projCoords.x > cropRect.z || projCoords.y < cropRect.y || projCoords.y > cropRect.w) {
+        czm_FragColor = color;
+        return;
+    }
+
+    vec4 videoColor = texture(videoTexture, projCoords.xy);
+
+    // 计算边缘羽化
+    float distX = min(projCoords.x - cropRect.x, cropRect.z - projCoords.x);
+    float distY = min(projCoords.y - cropRect.y, cropRect.w - projCoords.y);
+    float minDist = min(distX, distY);
+    float edgeFactor = featherAmount > 0.0 ? smoothstep(0.0, featherAmount, minDist) : 1.0;
 
     // 输出
     if (visibility == 1.0) {
         // 可见区域
-        czm_FragColor = mix(color, vec4(videoColor.rgb * intensity, 1.0), opacity * featherAlpha);
+        czm_FragColor = mix(color, vec4(videoColor.rgb * intensity, 1.0), opacity * edgeFactor);
     } else {
         // 不可见区域
         czm_FragColor = color;

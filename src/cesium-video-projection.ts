@@ -1,6 +1,20 @@
 import * as Cesium from "cesium";
 import ECEF from "./utils/ECEF";
 import fragmentShader from "./shaders/cesium-video-projection.frag.glsl";
+import computeQuadHomographyElements from "./utils/computeQuadHomographyElements";
+
+// 由四角点计算Homography矩阵（投影UV空间 → 视频UV空间）
+function computeQuadHomography(
+    corners: [
+        [number, number],
+        [number, number],
+        [number, number],
+        [number, number],
+    ]
+): Cesium.Matrix3 {
+    const elements = computeQuadHomographyElements(corners);
+    return Cesium.Matrix3.fromRowMajorArray(elements);
+}
 
 export type TextureSource =
     | HTMLVideoElement
@@ -29,6 +43,13 @@ export interface CesiumProjectorOptions {
     isShowHelper?: boolean;
     videoPlay?: boolean;
     texture?: any;
+    cropRect?: [number, number, number, number];
+    quadCorners?: [
+        [number, number],
+        [number, number],
+        [number, number],
+        [number, number],
+    ];
 }
 
 export type CesiumProjectorTool = {
@@ -49,6 +70,13 @@ export type CesiumProjectorTool = {
     far: number;
     near: number;
     source: TextureSource;
+    cropRect: [number, number, number, number];
+    quadCorners: [
+        [number, number],
+        [number, number],
+        [number, number],
+        [number, number],
+    ];
 };
 
 // 创建视频投射工具
@@ -65,6 +93,18 @@ export function createCesiumVideoProjector(
         projBias = 0.0001,
         edgeFeather = 0.05,
         isShowHelper = true,
+        cropRect = [0, 0, 1, 1] as [number, number, number, number],
+        quadCorners = [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+        ] as [
+            [number, number],
+            [number, number],
+            [number, number],
+            [number, number],
+        ],
     } = opts;
 
     const ecef = new ECEF();
@@ -92,6 +132,8 @@ export function createCesiumVideoProjector(
     let postProcess: Cesium.PostProcessStage | null | undefined;
     let camHelper: Cesium.Primitive | null = null;
     let videoTexture: any;
+    let quadHomography: Cesium.Matrix3;
+    let cropRectVec4: Cesium.Cartesian4;
 
     // 获取视口宽高比
     function getWinWidHei(): number {
@@ -288,6 +330,17 @@ export function createCesiumVideoProjector(
     // 添加后处理效果
     function addPostProcess(): void {
         if (destroyed || !viewShadowMap) return;
+        if (!quadHomography) {
+            quadHomography = computeQuadHomography(quadCorners);
+        }
+        if (!cropRectVec4) {
+            cropRectVec4 = new Cesium.Cartesian4(
+                cropRect[0],
+                cropRect[1],
+                cropRect[2],
+                cropRect[3]
+            );
+        }
         postProcess = new Cesium.PostProcessStage({
             fragmentShader: fragmentShader,
             uniforms: {
@@ -318,6 +371,10 @@ export function createCesiumVideoProjector(
                 },
                 // 边缘羽化强度
                 featherAmount: () => edgeFeather,
+                // 裁剪区域
+                cropRect: () => cropRectVec4,
+                // 四角变换矩阵
+                quadHomography: () => quadHomography,
             },
         });
         viewer.scene.postProcessStages.add(postProcess);
@@ -559,6 +616,40 @@ export function createCesiumVideoProjector(
                     near = val;
                     updateResources();
                 }
+            },
+            enumerable: true,
+        },
+        // 裁剪区域（UV空间，[x0, y0, x1, y1]，范围 0~1）
+        cropRect: {
+            get: (): [number, number, number, number] => {
+                return [
+                    cropRectVec4.x,
+                    cropRectVec4.y,
+                    cropRectVec4.z,
+                    cropRectVec4.w,
+                ];
+            },
+            set: (rect: [number, number, number, number]) => {
+                if (destroyed) return;
+                cropRectVec4.x = rect[0];
+                cropRectVec4.y = rect[1];
+                cropRectVec4.z = rect[2];
+                cropRectVec4.w = rect[3];
+            },
+            enumerable: true,
+        },
+        // 四角点变换（投影UV空间，顺序：左下、右下、右上、左上）
+        quadCorners: {
+            set: (
+                corners: [
+                    [number, number],
+                    [number, number],
+                    [number, number],
+                    [number, number],
+                ]
+            ) => {
+                if (destroyed) return;
+                quadHomography = computeQuadHomography(corners);
             },
             enumerable: true,
         },

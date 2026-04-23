@@ -152,6 +152,18 @@ onMounted(async () => {
         lon: projectionConfig.lon,
         lat: projectionConfig.lat,
         hei: projectionConfig.hei,
+        cropX0: 0,
+        cropY0: 0,
+        cropX1: 1,
+        cropY1: 1,
+        quadBLx: 0,
+        quadBLy: 0,
+        quadBRx: 1,
+        quadBRy: 0,
+        quadTRx: 1,
+        quadTRy: 1,
+        quadTLx: 0,
+        quadTLy: 1,
     };
     let isAutoOpacity = projGuiConfig.isAutoOpacity;
 
@@ -269,6 +281,78 @@ onMounted(async () => {
         .add(projGuiConfig, "hei", 0, 100, 0.1)
         .name("高度(hei)")
         .onChange(updatePosition);
+        
+    // 裁剪区域
+    function updateCropFromGUI() {
+        CesiumProjectorTool.cropRect = [
+            projGuiConfig.cropX0,
+            projGuiConfig.cropY0,
+            projGuiConfig.cropX1,
+            projGuiConfig.cropY1,
+        ];
+    }
+
+    const cropFolder = gui.addFolder("裁剪区域(cropRect)");
+    cropFolder
+        .add(projGuiConfig, "cropX0", 0, 1, 0.01)
+        .name("左边界(x0)")
+        .onChange(updateCropFromGUI);
+    cropFolder
+        .add(projGuiConfig, "cropY0", 0, 1, 0.01)
+        .name("下边界(y0)")
+        .onChange(updateCropFromGUI);
+    cropFolder
+        .add(projGuiConfig, "cropX1", 0, 1, 0.01)
+        .name("右边界(x1)")
+        .onChange(updateCropFromGUI);
+    cropFolder
+        .add(projGuiConfig, "cropY1", 0, 1, 0.01)
+        .name("上边界(y1)")
+        .onChange(updateCropFromGUI);
+
+    // 四角点变换
+    function updateQuadFromGUI() {
+        CesiumProjectorTool.quadCorners = [
+            [projGuiConfig.quadBLx, projGuiConfig.quadBLy],
+            [projGuiConfig.quadBRx, projGuiConfig.quadBRy],
+            [projGuiConfig.quadTRx, projGuiConfig.quadTRy],
+            [projGuiConfig.quadTLx, projGuiConfig.quadTLy],
+        ];
+    }
+
+    const quadFolder = gui.addFolder("四角点变换(quadCorners)");
+    quadFolder
+        .add(projGuiConfig, "quadBLx", -0.5, 1.5, 0.001)
+        .name("左下X(BL.x)")
+        .onChange(updateQuadFromGUI);
+    quadFolder
+        .add(projGuiConfig, "quadBLy", -0.5, 1.5, 0.001)
+        .name("左下Y(BL.y)")
+        .onChange(updateQuadFromGUI);
+    quadFolder
+        .add(projGuiConfig, "quadBRx", -0.5, 1.5, 0.001)
+        .name("右下X(BR.x)")
+        .onChange(updateQuadFromGUI);
+    quadFolder
+        .add(projGuiConfig, "quadBRy", -0.5, 1.5, 0.001)
+        .name("右下Y(BR.y)")
+        .onChange(updateQuadFromGUI);
+    quadFolder
+        .add(projGuiConfig, "quadTRx", -0.5, 1.5, 0.001)
+        .name("右上X(TR.x)")
+        .onChange(updateQuadFromGUI);
+    quadFolder
+        .add(projGuiConfig, "quadTRy", -0.5, 1.5, 0.001)
+        .name("右上Y(TR.y)")
+        .onChange(updateQuadFromGUI);
+    quadFolder
+        .add(projGuiConfig, "quadTLx", -0.5, 1.5, 0.001)
+        .name("左上X(TL.x)")
+        .onChange(updateQuadFromGUI);
+    quadFolder
+        .add(projGuiConfig, "quadTLy", -0.5, 1.5, 0.001)
+        .name("左上Y(TL.y)")
+        .onChange(updateQuadFromGUI);
 });
 
 onBeforeUnmount(() => {

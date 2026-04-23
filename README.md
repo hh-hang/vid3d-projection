@@ -6,46 +6,38 @@
 
 [![NPM Package][npm]][npm-url]
 
-基于 `Three.js` 和 `Cesium.js` 的空间视频投影工具。仓库包含示例及源码。
-
-该工具支持：
-- Three.js：将 `THREE.VideoTexture` 从投影相机投影到场景中的目标模型上，支持深度遮挡剔除、边缘羽化、强度与透明度控制等。
-- Cesium.js：在 3D 地球场景中进行视频投影，支持地理坐标定位和投影变换。
+`vid3d-projection` 是一个面向 `Three.js` 和 `Cesium.js` 的三维视频投影工具库，支持把视频内容投射融合到 3D 模型或地理场景中。
 
 ---
 
 ## 在线演示
 
-点击图片查看在线演示：
+点击图片查看在线示例：
 
 ### Three.js 视频融合
 
 [![Three.js 视频融合](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/2.gif "点击查看 Three.js 视频融合示例")](https://hh-hang.github.io/vid3d-projection/three-monitor.html)
 
-### Three.js 电影院
-
-[![Three.js 电影院](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/1.gif "点击查看电影院示例")](https://hh-hang.github.io/vid3d-projection/three-cinema.html)
-
 ### Cesium.js 视频融合
 
 [![Cesium.js 视频融合](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/3.gif "点击查看 Cesium.js 视频融合示例")](https://hh-hang.github.io/vid3d-projection/cesium-monitor.html)
+
+### Three.js 电影院
+
+[![Three.js 电影院](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/1.gif "点击查看 Three.js 电影院示例")](https://hh-hang.github.io/vid3d-projection/three-cinema.html)
 
 ---
 
 ## 本地运行示例
 
 ```bash
-# 克隆仓库
 git clone https://github.com/hh-hang/vid3d-projection.git
-
-# 安装依赖
+cd vid3d-projection
 npm install
-
-# 运行开发服务器
 npm run dev
 ```
 
-然后在浏览器访问 `http://localhost:5173` 查看示例。
+浏览器打开：`http://localhost:5173`
 
 ---
 
@@ -54,170 +46,243 @@ npm run dev
 ```bash
 npm install vid3d-projection
 ```
+---
+
+## 导入方式
+
+推荐按子路径导入：
+
+```ts
+import { createThreeVideoProjector } from "vid3d-projection/three";
+import { createCesiumVideoProjector } from "vid3d-projection/cesium";
+```
+
+也可以从根入口导入：
+
+```ts
+import {
+  createThreeVideoProjector,
+  createCesiumVideoProjector,
+} from "vid3d-projection";
+```
+
+---
 
 ## 快速开始
 
-### Three.js 示例
+### Three.js
 
 ```ts
 import * as THREE from "three";
 import { createThreeVideoProjector } from "vid3d-projection/three";
 
-// 创建video元素并生成 VideoTexture
+// 准备视频源
 const video = document.createElement("video");
-video.src = "path/to/video.mp4";
+video.src = "/video/monitorTest.mp4";
 video.loop = true;
 video.muted = true;
 video.playsInline = true;
 await video.play();
+
+// 由 video 生成可用于着色器采样的纹理
 const videoTexture = new THREE.VideoTexture(video);
 
-// 注：可以使用视频流，只要保证最后成功创建videoTexture
-
-// 创建投影器
+// 创建投影器（核心参数：相机位置、视锥参数、朝向）
 const projector = await createThreeVideoProjector({
-  scene, // three 场景
-  renderer, // three 渲染器
-  videoTexture, // 视频纹理
-  projCamPosition: [2, 2, 2], // 投影相机位置
-  projCamParams: { fov: 30, aspect: 1, near: 0.5, far: 50 }, // 投影相机参数
-  orientationParams: { azimuthDeg: 180, elevationDeg: -10, rollDeg: 0 }, // 方位角/俯仰/滚转
-  intensity: 1.0, // 投影颜色强度
-  opacity: 1.0, // 投影透明度
-  projBias: 0.0001, // 深度偏移
-  edgeFeather: 0.05, // 边缘羽化程度
-  cropRect: [0, 0, 1, 1], // 裁剪区域（UV空间，[x0, y0, x1, y1]，范围 0~1）
-  quadCorners: [[0, 0], [1, 0], [1, 1], [0, 1]], // 四角点变换（投影UV空间，顺序：左下、右下、右上、左上）
-  isShowHelper: true, // 是否显示相机辅助器
+  scene, // Three 场景
+  renderer, // Three 渲染器
+  videoTexture, // 投影视频纹理
+  projCamPosition: [2, 2, 2], // 投影相机位置 [x, y, z]
+  projCamParams: { fov: 30, aspect: 1, near: 0.1, far: 50 }, // 投影视锥参数
+  orientationParams: { azimuthDeg: 180, elevationDeg: -10, rollDeg: 0 }, // 方位/俯仰/横滚（度）
+  intensity: 1.0, // 投影强度（对应 uniforms.intensity）
+  opacity: 1.0, // 全局透明度（0~1）
+  projBias: 0.0001, // 深度偏移，减轻自遮挡/闪烁
+  edgeFeather: 0.05, // 投影边缘羽化
+  cropRect: [0, 0, 1, 1], // 裁剪区域 [x0, y0, x1, y1]
+  quadCorners: [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ], // 四角透视校正（顺序：左下、右下、右上、左上）
+  isShowHelper: true, // 显示投影相机辅助线
 });
 
-// 将需要被投影的 mesh 加入
-projector.addTargetMesh(Mesh1);
-projector.addTargetMesh(Mesh2);
-...
+// 添加需要被投影的目标 mesh
+projector.addTargetMesh(meshA);
+projector.addTargetMesh(meshB);
 
-// 渲染循环
-function animate() {
-  // ... 更新场景、控制器
-  projector.update();//（如果模型位置及投影参数固定时，则不需要执行update()函数）
-}
-animate();
+// 渲染循环中调用 update
+renderer.setAnimationLoop(() => {
+  projector.update();
+  renderer.render(scene, camera);
+});
 
-// 销毁时
+// 释放资源（卸载页面或销毁场景时）
 projector.dispose();
 ```
 
-### Cesium.js 示例
+### Cesium.js
 
 ```ts
 import * as Cesium from "cesium";
 import { createCesiumVideoProjector } from "vid3d-projection/cesium";
 
-// 创建video元素
+// 初始化 Cesium Viewer
+const viewer = new Cesium.Viewer("cesiumContainer");
+
+// 准备视频源
 const video = document.createElement("video");
-video.src = "path/to/video.mp4";
+video.src = "/video/monitorTest2.mp4";
 video.loop = true;
 video.muted = true;
 video.playsInline = true;
 await video.play();
 
-// 创建Cesium视图
-const viewer = new Cesium.Viewer("cesiumContainer");
-
 // 创建投影器
-const projector = await createCesiumVideoProjector({
-  viewer, // Cesium Viewer实例
-  video, // 视频元素
-  position: Cesium.Cartesian3.fromDegrees(116.3974, 39.9093, 100), // 投影位置（经纬度高度）
-  orientation: {
-    heading: Cesium.Math.toRadians(0), // 方位角
-    pitch: Cesium.Math.toRadians(-30), // 俯仰角
-    roll: 0 // 滚转角
-  },
-  fov: 45, // 视场角
-  aspectRatio: 16 / 9, // 宽高比
-  intensity: 1.0, // 投影强度
-  opacity: 1.0, // 投影透明度
-  edgeFeather: 0.05, // 边缘羽化程度
+const projector = createCesiumVideoProjector(viewer, {
+  projCamPosition: [116.3974, 39.9093, 100], // [经度, 纬度, 高度]
+  projCamParams: { fov: 36, aspect: 1, near: 0.1, far: 120 }, // 投影视锥参数
+  orientationParams: { azimuthDeg: 47, elevationDeg: -22.6, rollDeg: 0 }, // 方位/俯仰/横滚（度）
+  source: video, // 投影源
+  intensity: 1, // 投影强度
+  opacity: 1, // 投影透明度
+  projBias: 0.0001, // 深度偏移
+  edgeFeather: 0.05, // 边缘羽化
+  cropRect: [0, 0, 1, 1], // 裁剪区域
+  quadCorners: [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ], // 四角透视校正
+  isShowHelper: false, // 是否显示视锥辅助线
 });
 
-// 销毁时
+// 释放资源
 projector.destroy();
 ```
+
+说明：
+
+- `createCesiumVideoProjector(viewer, opts)` 会把投影器作为 primitive 加入 `viewer.scene.primitives`。
+- 不需要手动调用 `projector.update()`，Cesium 渲染流程会自动调用。
 
 ---
 
 ## API
 
-### Three.js API
+### Three API
 
 #### `createThreeVideoProjector(opts: ThreeProjectorToolOptions): Promise<ThreeProjectorTool>`
 
-##### ThreeProjectorToolOptions
+`ThreeProjectorToolOptions` 参数表：
 
-- `scene: THREE.Scene` — three 场景（必需）。
-- `renderer: THREE.WebGLRenderer` — three 渲染器（必需）。
-- `videoTexture: THREE.VideoTexture` — 用于投影的视频纹理（必需）。
-- `projCamPosition?: [number, number, number]` — 投影相机在世界空间的位置。默认 `[0,0,0]`。
-- `projCamParams?: { fov?: number; aspect?: number; near?: number; far?: number }` — 投影相机参数。默认 `{ fov: 30, aspect: 1, near: 0.5, far: 50 }`。
-- `orientationParams?: { azimuthDeg?: number; elevationDeg?: number; rollDeg?: number }` — 方位角/俯仰/滚转（度）。默认均为 `0`。
-- `depthSize?: number` — 深度渲染目标分辨率（宽/高）。默认 `1024`。
-- `intensity?: number` — 投影颜色强度，默认 `1.0`。
-- `opacity?: number` — 全局透明度，默认 `1.0`。
-- `projBias?: number` — 深度偏移，默认 `0.0001`。
-- `edgeFeather?: number` — 边缘羽化宽度，默认 `0.05`。
-- `cropRect?: [number, number, number, number]` — 视频纹理裁剪区域，UV 空间 `[x0, y0, x1, y1]`，范围 `0~1`。默认 `[0, 0, 1, 1]`（不裁剪）。
-- `quadCorners?: [[number, number], [number, number], [number, number], [number, number]]` — 四角点变换，在投影 UV 空间中指定四角坐标（顺序：左下、右下、右上、左上），用于梯形/透视校正。默认为单位正方形。
-- `isShowHelper?: boolean` — 是否显示 `CameraHelper` 来可视化投影相机，默认 `true`。
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `scene` | `THREE.Scene` | 是 | - | Three 场景实例。 |
+| `renderer` | `THREE.WebGLRenderer` | 是 | - | Three 渲染器实例。 |
+| `videoTexture` | `THREE.VideoTexture` | 是 | - | 投影的视频纹理。 |
+| `projCamPosition` | `[number, number, number]` | 否 | `[0, 0, 0]` | 投影相机位置 `[x, y, z]`。 |
+| `projCamParams.fov` | `number` | 否 | `30` | 投影相机 FOV（度）。 |
+| `projCamParams.aspect` | `number` | 否 | `1` | 投影相机宽高比。 |
+| `projCamParams.near` | `number` | 否 | `0.1` | 投影相机近裁剪面。 |
+| `projCamParams.far` | `number` | 否 | `50` | 投影相机远裁剪面。 |
+| `orientationParams.azimuthDeg` | `number` | 否 | `0` | 方位角（度）。 |
+| `orientationParams.elevationDeg` | `number` | 否 | `0` | 俯仰角（度）。 |
+| `orientationParams.rollDeg` | `number` | 否 | `0` | 横滚角（度）。 |
+| `depthSize` | `number` | 否 | `1024` | 深度贴图分辨率（宽高相同）。 |
+| `intensity` | `number` | 否 | `1` | 初始投影强度（对应 `uniforms.intensity`）。 |
+| `opacity` | `number` | 否 | `1` | 初始透明度，内部会限制到 `0~1`。 |
+| `projBias` | `number` | 否 | `0.0001` | 深度偏移，减少投影穿插/闪烁。 |
+| `edgeFeather` | `number` | 否 | `0.05` | 边缘羽化强度。 |
+| `cropRect` | `[number, number, number, number]` | 否 | `[0, 0, 1, 1]` | UV 裁剪 `[x0, y0, x1, y1]`。 |
+| `quadCorners` | `[[number, number], [number, number], [number, number], [number, number]]` | 否 | `[[0,0],[1,0],[1,1],[0,1]]` | 四角透视校正，顺序：左下、右下、右上、左上。 |
+| `isShowHelper` | `boolean` | 否 | `true` | 是否显示 `CameraHelper`。 |
 
-##### ThreeProjectorTool (返回对象)
+`ThreeProjectorTool` 方法表：
 
-方法：
+| 方法 | 签名 | 说明 |
+| --- | --- | --- |
+| `addTargetMesh` | `(mesh: THREE.Mesh) => void` | 把目标网格加入投影列表，并创建 overlay/depth 代理。 |
+| `removeTargetMesh` | `(mesh: THREE.Mesh) => void` | 从投影列表移除目标网格及其内部代理对象。 |
+| `update` | `() => void` | 更新深度贴图、投影矩阵和 overlay 变换；建议在渲染循环中调用。 |
+| `dispose` | `() => void` | 清理内部资源（材质、RT、辅助对象等）。 |
 
-- `addTargetMesh(mesh: THREE.Mesh): void` — 将目标网格加入投影列表。会在场景中创建一个 overlay（投影用）和 depth proxy（用于深度渲染）。
-- `removeTargetMesh(mesh: THREE.Mesh): void` — 从投影列表移除指定 mesh，并清理对应资源。
-- `update(): void` — 每帧调用以更新深度渲染目标、投影矩阵，并同步 overlay 的矩阵。
-- `dispose(): void` — 销毁内部资源并从场景中移除创建的对象。
-- `updateAzimuthDeg(deg: number): void` — 设置方位角（度）并应用到投影相机。
-- `updateElevationDeg(deg: number): void` — 设置俯仰角（度）。
-- `updateRollDeg(deg: number): void` — 设置滚转角（度）。
-- `updateOpacity(opacity: number): void` — 更新投影透明度（0~1）。
-- `updateCropRect(rect: [number, number, number, number]): void` — 动态更新裁剪区域（UV 空间，`[x0, y0, x1, y1]`）。
-- `updateQuadCorners(corners: [[number, number], [number, number], [number, number], [number, number]]): void` — 动态更新四角点变换（投影 UV 空间，顺序：左下、右下、右上、左上）。
+`ThreeProjectorTool` 属性表：
 
-属性：
+| 属性 | 类型 | 可写 | 说明 |
+| --- | --- | --- | --- |
+| `azimuthDeg` | `number` | 是 | 方位角（度），写入后立即更新投影方向。 |
+| `elevationDeg` | `number` | 是 | 俯仰角（度）。 |
+| `rollDeg` | `number` | 是 | 横滚角（度）。 |
+| `opacity` | `number` | 是 | 透明度，范围会被限制为 `0~1`。 |
+| `cropRect` | `[number, number, number, number]` | 是 | UV 裁剪区域。 |
+| `quadCorners` | `[[number, number], [number, number], [number, number], [number, number]]` | 是（Setter） | 四角透视校正写入入口。 |
+| `uniforms` | `any` | 否 | 着色器 uniforms（如 `intensity/projBias/edgeFeather`）。 |
+| `overlays` | `THREE.Mesh[]` | 否 | 内部投影 overlay 列表。 |
+| `targetMeshes` | `THREE.Mesh[]` | 否 | 当前目标 mesh 列表。 |
+| `projCam` | `THREE.PerspectiveCamera` | 否 | 投影相机实例。 |
+| `camHelper` | `THREE.CameraHelper \| null` | 否 | 相机辅助线实例。 |
+| `orientationParams` | `{ azimuthDeg: number; elevationDeg: number; rollDeg: number }` | 否 | 当前朝向参数快照。 |
 
-- `uniforms` — 暴露给外部的着色器 uniform 对象（包含 `projectorMap`、`projectorDepthMap`、`projectorMatrix`、`intensity`、`projBias`、`edgeFeather`、`opacity`、`cropRect`、`quadHomography` 等）。
-- `overlays: THREE.Mesh[]` — 内部创建的 overlay 列表（投影用透明网格）。
-- `targetMeshes: THREE.Mesh[]` — 当前被投影的目标网格列表。
-- `projCam: THREE.PerspectiveCamera` — 用于投影的相机。
-- `camHelper: THREE.CameraHelper | null` — 可选的相机辅助器实例。
-- `orientationParams` — 当前的方位/俯仰/滚转角（度）。
+### Cesium API
 
-### Cesium.js API
+#### `createCesiumVideoProjector(viewer: Cesium.Viewer, opts: CesiumProjectorOptions): CesiumProjectorTool`
 
-#### `createCesiumVideoProjector(opts: CesiumProjectorOptions): Promise<CesiumProjectorTool>`
+`CesiumProjectorOptions` 参数表：
 
-##### CesiumProjectorOptions
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `viewer` | `Cesium.Viewer` | 是（函数第 1 参） | - | Cesium Viewer。 |
+| `projCamPosition` | `[number, number, number]` | 否 | `[0, 0, 0]` | 投影相机地理坐标 `[lon, lat, height]`。 |
+| `projCamParams.fov` | `number` | 否 | `30` | 投影视锥 FOV（度）。 |
+| `projCamParams.aspect` | `number` | 否 | `1` | 投影视锥宽高比。未传时会回落到视口比例。 |
+| `projCamParams.near` | `number` | 否 | `0.1` | 近裁剪面。 |
+| `projCamParams.far` | `number` | 否 | `50` | 远裁剪面，同时用于计算视点距离。 |
+| `orientationParams.azimuthDeg` | `number` | 否 | `0` | 方位角（度）。 |
+| `orientationParams.elevationDeg` | `number` | 否 | `0` | 俯仰角（度）。 |
+| `orientationParams.rollDeg` | `number` | 否 | `0` | 横滚角（度）。 |
+| `source` | `HTMLVideoElement \| HTMLImageElement \| HTMLCanvasElement \| ImageData` | 否 | - | 投影纹理源，可运行时切换。 |
+| `intensity` | `number` | 否 | `1` | 投影强度。 |
+| `opacity` | `number` | 否 | `1` | 投影透明度，内部限制到 `0~1`。 |
+| `projBias` | `number` | 否 | `0.0001` | 深度偏移。 |
+| `edgeFeather` | `number` | 否 | `0.05` | 边缘羽化。 |
+| `isShowHelper` | `boolean` | 否 | `true` | 是否显示视锥辅助线。 |
+| `cropRect` | `[number, number, number, number]` | 否 | `[0, 0, 1, 1]` | UV 裁剪区域。 |
+| `quadCorners` | `[[number, number], [number, number], [number, number], [number, number]]` | 否 | `[[0,0],[1,0],[1,1],[0,1]]` | 四角透视校正，顺序：左下、右下、右上、左上。 |
+| `videoPlay` | `boolean` | 否 | - | 预留字段（当前核心流程未使用）。 |
+| `texture` | `any` | 否 | - | 预留字段（当前核心流程未使用）。 |
 
-- `viewer: Cesium.Viewer` — Cesium Viewer 实例（必需）。
-- `video: HTMLVideoElement` — 视频元素（必需）。
-- `position: Cesium.Cartesian3` — 投影位置（必需）。
-- `orientation: { heading: number; pitch: number; roll: number }` — 投影方向（弧度）。
-- `fov: number` — 视场角（度），默认 `45`。
-- `aspectRatio: number` — 宽高比，默认 `16/9`。
-- `intensity: number` — 投影强度，默认 `1.0`。
-- `opacity: number` — 投影透明度，默认 `1.0`。
-- `edgeFeather: number` — 边缘羽化程度，默认 `0.05`。
+`CesiumProjectorTool` 方法表：
 
-##### CesiumProjectorTool (返回对象)
+| 方法 | 签名 | 说明 |
+| --- | --- | --- |
+| `update` | `(frameState: any) => void` | Cesium primitive 生命周期调用，手动调用通常不需要。 |
+| `destroy` | `() => void` | 销毁后处理、纹理、阴影图与辅助对象。 |
+| `isDestroyed` | `() => boolean` | 返回是否已销毁。 |
 
-方法：
+`CesiumProjectorTool` 属性表：
 
-- `updatePosition(position: Cesium.Cartesian3): void` — 更新投影位置。
-- `updateOrientation(orientation: { heading: number; pitch: number; roll: number }): void` — 更新投影方向。
-- `updateOpacity(opacity: number): void` — 更新投影透明度。
-- `dispose(): void` — 销毁投影器并清理资源。
+| 属性 | 类型 | 可写 | 说明 |
+| --- | --- | --- | --- |
+| `azimuthDeg` | `number` | 是 | 方位角（度），变更后会重建投影资源。 |
+| `elevationDeg` | `number` | 是 | 俯仰角（度），变更后会重建。 |
+| `rollDeg` | `number` | 是 | 横滚角（度），变更后会重建。 |
+| `opacity` | `number` | 是 | 投影透明度。 |
+| `intensity` | `number` | 是 | 投影强度。 |
+| `edgeFeather` | `number` | 是 | 边缘羽化强度。 |
+| `projBias` | `number` | 是 | 深度偏移。 |
+| `aspect` | `number` | 是 | 宽高比，变更后会重建。 |
+| `fov` | `number` | 是 | FOV（度），变更后会重建。 |
+| `isShowHelper` | `boolean` | 是 | 控制视锥辅助线显隐。 |
+| `cameraPosition` | `[number, number, number]` | 是 | 地理位置 `[lon, lat, height]`，变更后会重建。 |
+| `far` | `number` | 是 | 远裁剪面，变更后会重建。 |
+| `near` | `number` | 是 | 近裁剪面，变更后会重建。 |
+| `cropRect` | `[number, number, number, number]` | 是 | UV 裁剪区域。 |
+| `quadCorners` | `[[number, number], [number, number], [number, number], [number, number]]` | 是（Setter） | 四角透视校正写入入口。 |
+| `source` | `TextureSource` | 是（Setter） | 投影源切换入口（video/image/canvas/imageData）。 |
 
 ---
 

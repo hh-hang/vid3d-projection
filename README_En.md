@@ -6,46 +6,38 @@
 
 [![NPM Package][npm]][npm-url]
 
-A spatial video projection utility for **Three.js** and **Cesium.js**.
-
-> This tool supports:
-> - Three.js: Projects `THREE.VideoTexture` from a projection camera onto target models in the scene, with support for depth-based occlusion, edge feathering, intensity and opacity controls, and more.
-> - Cesium.js: Enables video projection in 3D globe scenes, supporting geographic coordinate positioning and projection transformations.
+`vid3d-projection` is a 3D video projection utility for `Three.js` and `Cesium.js`, designed for projecting and blending video content into 3D meshes or geographic scenes.
 
 ---
 
 ## Live Demo
 
-Click on the images to view the live demos:
+Click the images to open the live demos:
 
 ### Three.js Video Fusion
 
-[![Three.js Video Fusion](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/2.gif "Click to view Three.js Video Fusion demo")](https://hh-hang.github.io/vid3d-projection/three-monitor.html)
-
-### Three.js Cinema
-
-[![Three.js Cinema](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/1.gif "Click to view Cinema demo")](https://hh-hang.github.io/vid3d-projection/three-cinema.html)
+[![Three.js Video Fusion](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/2.gif "Open Three.js Video Fusion demo")](https://hh-hang.github.io/vid3d-projection/three-monitor.html)
 
 ### Cesium.js Video Fusion
 
-[![Cesium.js Video Fusion](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/3.gif "Click to view Cesium.js Video Fusion demo")](https://hh-hang.github.io/vid3d-projection/cesium-monitor.html)
+[![Cesium.js Video Fusion](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/3.gif "Open Cesium.js Video Fusion demo")](https://hh-hang.github.io/vid3d-projection/cesium-monitor.html)
+
+### Three.js Cinema
+
+[![Three.js Cinema](https://raw.githubusercontent.com/hh-hang/vid3d-projection/main/example/public/imgs/1.gif "Open Three.js Cinema demo")](https://hh-hang.github.io/vid3d-projection/three-cinema.html)
 
 ---
 
 ## Run Examples Locally
 
 ```bash
-# Clone the repository
 git clone https://github.com/hh-hang/vid3d-projection.git
-
-# Install dependencies
+cd vid3d-projection
 npm install
-
-# Start the development server
 npm run dev
 ```
 
-Then open your browser and visit `http://localhost:5173` to view the examples.
+Open in browser: `http://localhost:5173`
 
 ---
 
@@ -55,169 +47,243 @@ Then open your browser and visit `http://localhost:5173` to view the examples.
 npm install vid3d-projection
 ```
 
-## Quick start
+---
 
-### Three.js Example
+## Imports
+
+Recommended subpath imports:
+
+```ts
+import { createThreeVideoProjector } from "vid3d-projection/three";
+import { createCesiumVideoProjector } from "vid3d-projection/cesium";
+```
+
+You can also import from the root entry:
+
+```ts
+import {
+  createThreeVideoProjector,
+  createCesiumVideoProjector,
+} from "vid3d-projection";
+```
+
+---
+
+## Quick Start
+
+### Three.js
 
 ```ts
 import * as THREE from "three";
 import { createThreeVideoProjector } from "vid3d-projection/three";
 
-// Create a video element and a VideoTexture
+// Prepare a video source
 const video = document.createElement("video");
-video.src = "path/to/video.mp4";
+video.src = "/video/monitorTest.mp4";
 video.loop = true;
 video.muted = true;
 video.playsInline = true;
 await video.play();
+
+// Create a texture from the video for shader sampling
 const videoTexture = new THREE.VideoTexture(video);
 
-// Note: you can also use a video stream as long as a VideoTexture is successfully created.
-
-// Create the projector
+// Create projector (core params: camera position, frustum, orientation)
 const projector = await createThreeVideoProjector({
-  scene, // three.js Scene
-  renderer, // three.js WebGLRenderer
-  videoTexture, // the video texture to project
-  projCamPosition: [2, 2, 2], // projector camera world position
-  projCamParams: { fov: 30, aspect: 1, near: 0.5, far: 50 }, // projector camera params
-  orientationParams: { azimuthDeg: 180, elevationDeg: -10, rollDeg: 0 }, // azimuth / elevation / roll in degrees
-  intensity: 1.0, // projection color intensity
-  opacity: 1.0, // projection opacity
-  projBias: 0.0001, // depth bias
-  edgeFeather: 0.05, // edge feather amount
-  cropRect: [0, 0, 1, 1], // crop region in UV space [x0, y0, x1, y1], range 0–1
-  quadCorners: [[0, 0], [1, 0], [1, 1], [0, 1]], // quad corner warp (projection UV space, order: bottom-left, bottom-right, top-right, top-left)
-  isShowHelper: true, // show CameraHelper for the projector
+  scene, // Three scene
+  renderer, // Three renderer
+  videoTexture, // video texture to project
+  projCamPosition: [2, 2, 2], // projector position [x, y, z]
+  projCamParams: { fov: 30, aspect: 1, near: 0.1, far: 50 }, // projector frustum params
+  orientationParams: { azimuthDeg: 180, elevationDeg: -10, rollDeg: 0 }, // azimuth/elevation/roll (degrees)
+  intensity: 1.0, // projection intensity (maps to uniforms.intensity)
+  opacity: 1.0, // global opacity (0~1)
+  projBias: 0.0001, // depth bias to reduce acne/flicker
+  edgeFeather: 0.05, // projection edge feathering
+  cropRect: [0, 0, 1, 1], // crop area [x0, y0, x1, y1]
+  quadCorners: [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ], // keystone correction (order: BL, BR, TR, TL)
+  isShowHelper: true, // show projector camera helper
 });
 
-// Add meshes to be projected onto
-projector.addTargetMesh(Mesh1);
-projector.addTargetMesh(Mesh2);
-...
+// Add target meshes to receive projection
+projector.addTargetMesh(meshA);
+projector.addTargetMesh(meshB);
 
-// Rendering loop
-function animate() {
-  // ... update scene, controls, etc.
-  projector.update(); //( If the model position and projection parameters are fixed, there is no need to call the update() function. )
-}
-animate();
+// Call update in render loop
+renderer.setAnimationLoop(() => {
+  projector.update();
+  renderer.render(scene, camera);
+});
 
-// Dispose when done
+// Dispose resources when unmounting/destroying scene
 projector.dispose();
 ```
 
-### Cesium.js Example
+### Cesium.js
 
 ```ts
 import * as Cesium from "cesium";
 import { createCesiumVideoProjector } from "vid3d-projection/cesium";
 
-// Create a video element
+// Initialize Cesium Viewer
+const viewer = new Cesium.Viewer("cesiumContainer");
+
+// Prepare a video source
 const video = document.createElement("video");
-video.src = "path/to/video.mp4";
+video.src = "/video/monitorTest2.mp4";
 video.loop = true;
 video.muted = true;
 video.playsInline = true;
 await video.play();
 
-// Create Cesium viewer
-const viewer = new Cesium.Viewer("cesiumContainer");
-
-// Create the projector
-const projector = await createCesiumVideoProjector({
-  viewer, // Cesium Viewer instance
-  video, // video element
-  position: Cesium.Cartesian3.fromDegrees(116.3974, 39.9093, 100), // projection position (longitude, latitude, height)
-  orientation: {
-    heading: Cesium.Math.toRadians(0), // heading angle
-    pitch: Cesium.Math.toRadians(-30), // pitch angle
-    roll: 0 // roll angle
-  },
-  fov: 45, // field of view
-  aspectRatio: 16 / 9, // aspect ratio
-  intensity: 1.0, // projection intensity
-  opacity: 1.0, // projection opacity
-  edgeFeather: 0.05, // edge feather amount
+// Create projector
+const projector = createCesiumVideoProjector(viewer, {
+  projCamPosition: [116.3974, 39.9093, 100], // [longitude, latitude, height]
+  projCamParams: { fov: 36, aspect: 1, near: 0.1, far: 120 }, // projector frustum params
+  orientationParams: { azimuthDeg: 47, elevationDeg: -22.6, rollDeg: 0 }, // azimuth/elevation/roll (degrees)
+  source: video, // projection source
+  intensity: 1, // projection intensity
+  opacity: 1, // projection opacity
+  projBias: 0.0001, // depth bias
+  edgeFeather: 0.05, // edge feathering
+  cropRect: [0, 0, 1, 1], // crop area
+  quadCorners: [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ], // keystone correction
+  isShowHelper: false, // show/hide frustum helper
 });
 
-// Dispose when done
+// Dispose resources
 projector.destroy();
 ```
+
+Notes:
+
+- `createCesiumVideoProjector(viewer, opts)` adds the projector as a primitive into `viewer.scene.primitives`.
+- You do not need to call `projector.update()` manually; Cesium calls it in its render pipeline.
 
 ---
 
 ## API
 
-### Three.js API
+### Three API
 
 #### `createThreeVideoProjector(opts: ThreeProjectorToolOptions): Promise<ThreeProjectorTool>`
 
-##### `ThreeProjectorToolOptions`
+`ThreeProjectorToolOptions` Parameter Table:
 
-- `scene: THREE.Scene` — the three.js scene (required).
-- `renderer: THREE.WebGLRenderer` — the renderer (required).
-- `videoTexture: THREE.VideoTexture` — the video texture to project (required).
-- `projCamPosition?: [number, number, number]` — projector camera world position. Default: `[0, 0, 0]`.
-- `projCamParams?: { fov?: number; aspect?: number; near?: number; far?: number }` — projector camera params. Default: `{ fov: 30, aspect: 1, near: 0.5, far: 50 }`.
-- `orientationParams?: { azimuthDeg?: number; elevationDeg?: number; rollDeg?: number }` — azimuth / elevation / roll in degrees. Defaults: `0` for each.
-- `depthSize?: number` — resolution (width/height) of the depth render target. Default: `1024`.
-- `intensity?: number` — projection color intensity. Default: `1.0`.
-- `opacity?: number` — global opacity (0–1). Default: `1.0`.
-- `projBias?: number` — depth bias. Default: `0.0001`.
-- `edgeFeather?: number` — edge feather width. Default: `0.05`.
-- `cropRect?: [number, number, number, number]` — crop region of the video texture in UV space `[x0, y0, x1, y1]`, range `0–1`. Default: `[0, 0, 1, 1]` (no crop).
-- `quadCorners?: [[number, number], [number, number], [number, number], [number, number]]` — four-corner warp in projection UV space (order: bottom-left, bottom-right, top-right, top-left), used for keystone/perspective correction. Default: unit square.
-- `isShowHelper?: boolean` — show a `CameraHelper` to visualize the projector camera. Default: `true`.
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `scene` | `THREE.Scene` | Yes | - | Three scene instance. |
+| `renderer` | `THREE.WebGLRenderer` | Yes | - | Three renderer instance. |
+| `videoTexture` | `THREE.VideoTexture` | Yes | - | Video texture used for projection. |
+| `projCamPosition` | `[number, number, number]` | No | `[0, 0, 0]` | Projector camera position `[x, y, z]`. |
+| `projCamParams.fov` | `number` | No | `30` | Projector camera FOV (degrees). |
+| `projCamParams.aspect` | `number` | No | `1` | Projector camera aspect ratio. |
+| `projCamParams.near` | `number` | No | `0.1` | Projector camera near plane. |
+| `projCamParams.far` | `number` | No | `50` | Projector camera far plane. |
+| `orientationParams.azimuthDeg` | `number` | No | `0` | Azimuth angle (degrees). |
+| `orientationParams.elevationDeg` | `number` | No | `0` | Elevation angle (degrees). |
+| `orientationParams.rollDeg` | `number` | No | `0` | Roll angle (degrees). |
+| `depthSize` | `number` | No | `1024` | Depth texture resolution (square). |
+| `intensity` | `number` | No | `1` | Initial projection intensity (maps to `uniforms.intensity`). |
+| `opacity` | `number` | No | `1` | Initial opacity, clamped internally to `0~1`. |
+| `projBias` | `number` | No | `0.0001` | Depth bias to reduce projection acne/flicker. |
+| `edgeFeather` | `number` | No | `0.05` | Projection edge feather amount. |
+| `cropRect` | `[number, number, number, number]` | No | `[0, 0, 1, 1]` | UV crop rectangle `[x0, y0, x1, y1]`. |
+| `quadCorners` | `[[number, number], [number, number], [number, number], [number, number]]` | No | `[[0,0],[1,0],[1,1],[0,1]]` | Keystone correction corners; order: BL, BR, TR, TL. |
+| `isShowHelper` | `boolean` | No | `true` | Whether to show `CameraHelper`. |
 
-##### `ThreeProjectorTool` (returned object)
+`ThreeProjectorTool` Method Table:
 
-**Methods:**
+| Method | Signature | Description |
+| --- | --- | --- |
+| `addTargetMesh` | `(mesh: THREE.Mesh) => void` | Adds a mesh to projection targets and creates overlay/depth proxy. |
+| `removeTargetMesh` | `(mesh: THREE.Mesh) => void` | Removes a mesh and related internal proxy objects. |
+| `update` | `() => void` | Updates depth texture, projector matrix, and overlay transforms; call in render loop. |
+| `dispose` | `() => void` | Cleans up internal resources (materials, render targets, helper objects). |
 
-- `addTargetMesh(mesh: THREE.Mesh): void` — add a target mesh to the projection list. The tool creates an overlay mesh (for projection) and a depth proxy (for depth rendering) in the scene.
-- `removeTargetMesh(mesh: THREE.Mesh): void` — remove a mesh from the projection list and clean up associated resources.
-- `update(): void` — call each frame to update the depth render target, projector matrix, and sync overlays' matrices.
-- `dispose(): void` — destroy internal resources and remove created objects from the scene.
-- `updateAzimuthDeg(deg: number): void` — set the azimuth (degrees) on the projector camera.
-- `updateElevationDeg(deg: number): void` — set the elevation (degrees).
-- `updateRollDeg(deg: number): void` — set the roll (degrees).
-- `updateOpacity(opacity: number): void` — update projection opacity (0–1).
-- `updateCropRect(rect: [number, number, number, number]): void` — dynamically update the crop region (UV space, `[x0, y0, x1, y1]`).
-- `updateQuadCorners(corners: [[number, number], [number, number], [number, number], [number, number]]): void` — dynamically update the four-corner warp (projection UV space, order: bottom-left, bottom-right, top-right, top-left).
+`ThreeProjectorTool` Property Table:
 
-**Properties:**
-
-- `uniforms` — exposed shader uniform object (contains `projectorMap`, `projectorDepthMap`, `projectorMatrix`, `intensity`, `projBias`, `edgeFeather`, `opacity`, `cropRect`, `quadHomography`, etc.).
-- `overlays: THREE.Mesh[]` — list of internal overlay meshes (used for rendering the projection).
-- `targetMeshes: THREE.Mesh[]` — current list of meshes being projected onto.
-- `projCam: THREE.PerspectiveCamera` — the projector camera.
-- `camHelper: THREE.CameraHelper | null` — optional CameraHelper instance.
-- `orientationParams` — current azimuth/elevation/roll (degrees).
+| Property | Type | Writable | Description |
+| --- | --- | --- | --- |
+| `azimuthDeg` | `number` | Yes | Azimuth angle (degrees); updates projector direction immediately. |
+| `elevationDeg` | `number` | Yes | Elevation angle (degrees). |
+| `rollDeg` | `number` | Yes | Roll angle (degrees). |
+| `opacity` | `number` | Yes | Opacity, clamped to `0~1`. |
+| `cropRect` | `[number, number, number, number]` | Yes | UV crop rectangle. |
+| `quadCorners` | `[[number, number], [number, number], [number, number], [number, number]]` | Yes (Setter) | Setter entry for keystone correction corners. |
+| `uniforms` | `any` | No | Shader uniforms (e.g. `intensity/projBias/edgeFeather`). |
+| `overlays` | `THREE.Mesh[]` | No | Internal projection overlay mesh list. |
+| `targetMeshes` | `THREE.Mesh[]` | No | Current projection target mesh list. |
+| `projCam` | `THREE.PerspectiveCamera` | No | Projector camera instance. |
+| `camHelper` | `THREE.CameraHelper \| null` | No | Camera helper instance. |
+| `orientationParams` | `{ azimuthDeg: number; elevationDeg: number; rollDeg: number }` | No | Current orientation parameter snapshot. |
 
 ### Cesium API
 
-#### `createCesiumVideoProjector(opts: CesiumProjectorOptions): Promise<CesiumProjectorTool>`
+#### `createCesiumVideoProjector(viewer: Cesium.Viewer, opts: CesiumProjectorOptions): CesiumProjectorTool`
 
-##### `CesiumProjectorOptions`
+`CesiumProjectorOptions` Parameter Table:
 
-- `viewer: Cesium.Viewer` — Cesium Viewer instance (required).
-- `video: HTMLVideoElement` — video element (required).
-- `position: Cesium.Cartesian3` — projection position (required).
-- `orientation: { heading: number; pitch: number; roll: number }` — projection orientation (radians).
-- `fov: number` — field of view (degrees), default `45`.
-- `aspectRatio: number` — aspect ratio, default `16/9`.
-- `intensity: number` — projection intensity, default `1.0`.
-- `opacity: number` — projection opacity, default `1.0`.
-- `edgeFeather: number` — edge feather amount, default `0.05`.
+| Parameter | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `viewer` | `Cesium.Viewer` | Yes (1st function arg) | - | Cesium Viewer instance. |
+| `projCamPosition` | `[number, number, number]` | No | `[0, 0, 0]` | Projector geodetic position `[lon, lat, height]`. |
+| `projCamParams.fov` | `number` | No | `30` | Projector frustum FOV (degrees). |
+| `projCamParams.aspect` | `number` | No | `1` | Projector frustum aspect ratio. Falls back to viewport ratio when omitted. |
+| `projCamParams.near` | `number` | No | `0.1` | Near clipping plane. |
+| `projCamParams.far` | `number` | No | `50` | Far clipping plane; also used for viewpoint distance computation. |
+| `orientationParams.azimuthDeg` | `number` | No | `0` | Azimuth angle (degrees). |
+| `orientationParams.elevationDeg` | `number` | No | `0` | Elevation angle (degrees). |
+| `orientationParams.rollDeg` | `number` | No | `0` | Roll angle (degrees). |
+| `source` | `HTMLVideoElement \| HTMLImageElement \| HTMLCanvasElement \| ImageData` | No | - | Projection texture source; can be switched at runtime. |
+| `intensity` | `number` | No | `1` | Projection intensity. |
+| `opacity` | `number` | No | `1` | Projection opacity, clamped internally to `0~1`. |
+| `projBias` | `number` | No | `0.0001` | Depth bias. |
+| `edgeFeather` | `number` | No | `0.05` | Edge feather amount. |
+| `isShowHelper` | `boolean` | No | `true` | Whether to show the frustum helper. |
+| `cropRect` | `[number, number, number, number]` | No | `[0, 0, 1, 1]` | UV crop rectangle. |
+| `quadCorners` | `[[number, number], [number, number], [number, number], [number, number]]` | No | `[[0,0],[1,0],[1,1],[0,1]]` | Keystone correction corners; order: BL, BR, TR, TL. |
+| `videoPlay` | `boolean` | No | - | Reserved field (not used in current core flow). |
+| `texture` | `any` | No | - | Reserved field (not used in current core flow). |
 
-##### `CesiumProjectorTool` (returned object)
+`CesiumProjectorTool` Method Table:
 
-**Methods:**
+| Method | Signature | Description |
+| --- | --- | --- |
+| `update` | `(frameState: any) => void` | Called by Cesium primitive lifecycle; manual calling is usually unnecessary. |
+| `destroy` | `() => void` | Destroys post-process stage, texture, shadow map, and helper resources. |
+| `isDestroyed` | `() => boolean` | Returns whether the projector is already destroyed. |
 
-- `updatePosition(position: Cesium.Cartesian3): void` — update projection position.
-- `updateOrientation(orientation: { heading: number; pitch: number; roll: number }): void` — update projection orientation.
-- `updateOpacity(opacity: number): void` — update projection opacity.
-- `dispose(): void` — destroy projector and clean up resources.
+`CesiumProjectorTool` Property Table:
+
+| Property | Type | Writable | Description |
+| --- | --- | --- | --- |
+| `azimuthDeg` | `number` | Yes | Azimuth angle (degrees); rebuilding resources after change. |
+| `elevationDeg` | `number` | Yes | Elevation angle (degrees); rebuilding resources after change. |
+| `rollDeg` | `number` | Yes | Roll angle (degrees); rebuilding resources after change. |
+| `opacity` | `number` | Yes | Projection opacity. |
+| `intensity` | `number` | Yes | Projection intensity. |
+| `edgeFeather` | `number` | Yes | Edge feather strength. |
+| `projBias` | `number` | Yes | Depth bias. |
+| `aspect` | `number` | Yes | Aspect ratio; rebuilding resources after change. |
+| `fov` | `number` | Yes | FOV (degrees); rebuilding resources after change. |
+| `isShowHelper` | `boolean` | Yes | Toggle frustum helper visibility. |
+| `cameraPosition` | `[number, number, number]` | Yes | Geodetic position `[lon, lat, height]`; rebuilding resources after change. |
+| `far` | `number` | Yes | Far plane; rebuilding resources after change. |
+| `near` | `number` | Yes | Near plane; rebuilding resources after change. |
+| `cropRect` | `[number, number, number, number]` | Yes | UV crop rectangle. |
+| `quadCorners` | `[[number, number], [number, number], [number, number], [number, number]]` | Yes (Setter) | Setter entry for keystone correction corners. |
+| `source` | `TextureSource` | Yes (Setter) | Projection source switch entry (video/image/canvas/imagedata). |
 
 ---
 

@@ -18,17 +18,6 @@
                     <span class="card-arrow">→</span>
                 </div>
             </a>
-            <a class="card" href="./three-cinema.html">
-                <div class="badge badge-three">Three.js</div>
-                <div class="card-image">
-                    <img src="/imgs/1.gif" alt="Cinema" />
-                </div>
-                <div class="card-info">
-                    <h2>影院</h2>
-                    <p>影院场景视频投影示例</p>
-                    <span class="card-arrow">→</span>
-                </div>
-            </a>
             <a class="card" href="./cesium-monitor.html">
                 <div class="badge badge-cesium">Cesium.js</div>
                 <div class="card-image">
@@ -40,6 +29,18 @@
                     <span class="card-arrow">→</span>
                 </div>
             </a>
+            <a class="card" href="./three-cinema.html">
+                <div class="badge badge-three">Three.js</div>
+                <div class="card-image">
+                    <img src="/imgs/1.gif" alt="Cinema" />
+                </div>
+                <div class="card-info">
+                    <h2>影院</h2>
+                    <p>影院场景视频投影示例</p>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+ 
         </main>
     </div>
 </template>
