@@ -144,7 +144,7 @@ const projector = await createCesiumVideoProjector({
 });
 
 // Dispose when done
-projector.dispose();
+projector.destroy();
 ```
 
 ---
