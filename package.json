@@ -1,25 +1,25 @@
 {
   "name": "vid3d-projection",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Spatial video projection utility for Three.js and Cesium",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./three": {
       "types": "./dist/three.d.ts",
-      "import": "./dist/three.js",
-      "require": "./dist/three.cjs"
+      "import": "./dist/three.mjs",
+      "require": "./dist/three.js"
     },
     "./cesium": {
       "types": "./dist/cesium.d.ts",
-      "import": "./dist/cesium.js",
-      "require": "./dist/cesium.cjs"
+      "import": "./dist/cesium.mjs",
+      "require": "./dist/cesium.js"
     }
   },
   "files": [
@@ -44,7 +44,7 @@
     "build:example": "vite build && node -e \"require('fs').writeFileSync('docs/.nojekyll', '')\""
   },
   "peerDependencies": {
-    "cesium": ">=1.100.0",
+    "cesium": ">=1.134.0",
     "three": ">=0.160.0"
   },
   "peerDependenciesMeta": {
