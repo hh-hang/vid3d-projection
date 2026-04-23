@@ -1,7 +1,5 @@
 [中文](README.md)
 
-⭐ Open source is hard work — give it a star if you like it! ⭐
-
 ---
 
 # vid3d-projection
