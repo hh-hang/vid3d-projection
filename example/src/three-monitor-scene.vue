@@ -211,7 +211,7 @@ onMounted(async () => {
                 rollDeg: 0,
             };
             initialFar = 10;
-            focusDistance = 5;
+            focusDistance = 1;
             camera.far = Math.max(1000, radius * 8);
             camera.near = 0.01;
             camera.updateProjectionMatrix();
