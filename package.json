@@ -1,7 +1,7 @@
 {
   "name": "vid3d-projection",
-  "version": "0.2.8",
-  "description": "Spatial video projection utility for Three.js and Cesium",
+  "version": "0.2.9",
+  "description": "A 3D video projection library for Three.js and CesiumJS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -66,6 +66,7 @@
     }
   },
   "devDependencies": {
+    "@sparkjsdev/spark": "2.4.0",
     "@types/node": "^25.0.10",
     "@types/three": "^0.182.0",
     "@vitejs/plugin-vue": "^6.0.3",

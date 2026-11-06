@@ -1,31 +1,36 @@
 <template>
     <div class="container" id="container" ref="cont"></div>
     <div class="model-credit">
-        Cinema model:
-        <a
-            href="https://sketchfab.com/3d-models/cinemamovie-theater-interior-dcaf6cdebcad4f03879c24186da257ee"
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            Sketchfab
-        </a>
-        Scene model:
-        <a
-            href="https://sketchfab.com/3d-models/futuristic-city-b4c3c957fad245d580e7a7d1a01c526b"
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            Sketchfab
-        </a>
-        <br />
-        Character controller:
-        <a
-            href="https://github.com/hh-hang/three-player-controller"
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            three-player-controller
-        </a>
+        <div class="credit-line">
+            Cinema model:
+            <a
+                href="https://sketchfab.com/3d-models/cinemamovie-theater-interior-dcaf6cdebcad4f03879c24186da257ee"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Sketchfab
+            </a>
+        </div>
+        <div class="credit-line">
+            Scene model:
+            <a
+                href="https://sketchfab.com/3d-models/futuristic-city-b4c3c957fad245d580e7a7d1a01c526b"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Sketchfab
+            </a>
+        </div>
+        <div class="credit-line">
+            Character controller:
+            <a
+                href="https://github.com/hh-hang/three-player-controller"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                three-player-controller
+            </a>
+        </div>
     </div>
 
     <a
@@ -235,22 +240,20 @@ onMounted(async () => {
     gltfLoader.setKTX2Loader(ktx2Loader);
 
     // 加载影院屏幕模型
-    await gltfLoader
-        .loadAsync("model/cinemamovie_theater_interior.glb")
-        .then((gltf) => {
-            const model = gltf.scene;
-            model.position.set(69.41, 0.6, 24.9);
-            model.traverse((child: any) => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                    ThreeProjectorTool.addTargetMesh(child);
-                }
-            });
-            scene.add(model);
+    await gltfLoader.loadAsync("model/cinema.glb").then((gltf) => {
+        const model = gltf.scene;
+        model.position.set(69.41, 0.6, 24.9);
+        model.traverse((child: any) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                ThreeProjectorTool.addTargetMesh(child);
+            }
         });
+        scene.add(model);
+    });
 
-    await gltfLoader.loadAsync("model/futuristic_city.glb").then((gltf) => {
+    await gltfLoader.loadAsync("model/city.glb").then((gltf) => {
         const model = gltf.scene;
         model.scale.set(0.005, 0.005, 0.005);
         model.position.set(-140.9, -8.75, 212.95);
@@ -302,7 +305,7 @@ const start = () => {
         camera,
         controls,
         playerModelConfig: {
-            url: "model/person.glb",
+            url: "model/player.glb",
             scale: 0.007,
             idleAnim: "idle",
             walkAnim: "walk",
@@ -394,28 +397,35 @@ onBeforeUnmount(() => {
 }
 .model-credit {
     position: fixed;
-    top: 10px;
+    top: 12px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
-    font-size: 16px;
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
     color: #e6eef6;
-    background: rgba(0, 0, 0, 0.35);
-    padding: 6px 12px;
-    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 7px 16px;
+    border-radius: 8px;
     backdrop-filter: blur(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     font-family:
         system-ui,
         -apple-system,
         "Segoe UI",
         Roboto,
-        Arial;
+        sans-serif;
+}
+
+.model-credit .credit-line {
+    white-space: nowrap;
 }
 
 .model-credit a {
-    color: #6ecbff;
+    color: #79c0ff;
     text-decoration: none;
 }
 
@@ -495,7 +505,8 @@ kbd {
 
 @media (hover: none) and (pointer: coarse), (max-width: 768px) {
     .hud,
-    .source {
+    .source,
+    .model-credit {
         display: none !important;
     }
 }

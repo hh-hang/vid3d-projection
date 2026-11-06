@@ -33,6 +33,7 @@ export type ThreeProjectorToolOptions = {
         rollDeg?: number;
     };
     depthSize?: number;
+    projectionSide?: THREE.Side;
     intensity?: number;
     opacity?: number;
     projBias?: number;
@@ -90,6 +91,7 @@ export async function createThreeVideoProjector(
         projCamParams = { fov: 30, aspect: 1, near: 0.1, far: 50 },
         orientationParams = { azimuthDeg: 0, elevationDeg: 0, rollDeg: 0 },
         depthSize = 1024,
+        projectionSide = THREE.FrontSide,
         intensity = 1.0,
         opacity = 1.0,
         projBias = 0.0001,
@@ -174,7 +176,7 @@ export async function createThreeVideoProjector(
         transparent: true,
         depthWrite: false,
         depthTest: true,
-        side: THREE.FrontSide,
+        side: projectionSide,
         polygonOffset: true,
         polygonOffsetFactor: -1,
         polygonOffsetUnits: -4,
@@ -207,7 +209,7 @@ export async function createThreeVideoProjector(
     const depthScene = new THREE.Scene();
     const depthMaterial = new THREE.MeshDepthMaterial();
     depthMaterial.depthPacking = THREE.RGBADepthPacking;
-    depthMaterial.side = THREE.FrontSide;
+    depthMaterial.side = projectionSide;
 
     const overlays: THREE.Mesh[] = [];
     const targetMeshes: THREE.Mesh[] = [];

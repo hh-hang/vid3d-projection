@@ -258,6 +258,7 @@ projector.fov = result.parameters.fovDeg;
 | `orientationParams.elevationDeg` | `number` | 否 | `0` | 俯仰角（度）。 |
 | `orientationParams.rollDeg` | `number` | 否 | `0` | 横滚角（度）。 |
 | `depthSize` | `number` | 否 | `1024` | 深度贴图分辨率（宽高相同）。 |
+| `projectionSide` | `THREE.Side` | 否 | `THREE.FrontSide` | 目标模型的投影面，同时用于视频投影和投影深度计算。支持 `THREE.FrontSide`、`THREE.BackSide` 和 `THREE.DoubleSide`。 |
 | `intensity` | `number` | 否 | `1` | 初始投影强度（对应 `uniforms.intensity`）。 |
 | `opacity` | `number` | 否 | `1` | 初始透明度，内部会限制到 `0~1`。 |
 | `projBias` | `number` | 否 | `0.0001` | 深度偏移，减少投影穿插/闪烁。 |

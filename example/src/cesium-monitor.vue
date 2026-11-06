@@ -9,7 +9,10 @@
         @parameters-change="syncCalibrationGui"
     />
     <div class="model-credit">
-        <span>Note: The video location does not match the model; for reference only.</span>
+        <span
+            >Note: The video location does not match the model; for reference
+            only.</span
+        >
     </div>
     <a
         class="source"
@@ -102,7 +105,9 @@ const syncCalibrationGui = () => {
     projectionConfig.aspect = CesiumProjectorTool.aspect;
     projectionConfig.near = CesiumProjectorTool.near;
     projectionConfig.far = CesiumProjectorTool.far;
-    gui.controllersRecursive().forEach((controller: any) => controller.updateDisplay());
+    gui.controllersRecursive().forEach((controller: any) =>
+        controller.updateDisplay()
+    );
 };
 
 onMounted(async () => {
@@ -203,7 +208,9 @@ onMounted(async () => {
 
     // 初始化 GUI 控制面板
     gui = new GUI({ title: "Projector Controls" });
-    gui.add(projectionConfig, "openCalibration").name("Open video spatial calibration");
+    gui.add(projectionConfig, "openCalibration").name(
+        "Open video spatial calibration"
+    );
     gui.add(projectionConfig, "goToProjector").name("Go to projector camera");
 
     let isAutoOpacity = projectionConfig.isAutoOpacity;
@@ -322,7 +329,7 @@ onMounted(async () => {
         .add(projectionConfig, "hei", 0, 100, 0.1)
         .name("Height")
         .onChange(updatePosition);
-        
+
     // 裁剪区域
     function updateCropFromGUI() {
         CesiumProjectorTool.cropRect = [
@@ -425,27 +432,35 @@ onBeforeUnmount(() => {
 
 .model-credit {
     position: fixed;
-    top: 10px;
+    top: 12px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
-    font-size: 16px;
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
     color: #e6eef6;
-    background: rgba(0, 0, 0, 0.35);
-    padding: 6px 12px;
-    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 7px 16px;
+    border-radius: 8px;
     backdrop-filter: blur(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     font-family:
         system-ui,
         -apple-system,
         "Segoe UI",
         Roboto,
-        Arial;
+        sans-serif;
+}
+
+.model-credit .credit-line {
+    white-space: nowrap;
 }
 
 .model-credit a {
-    color: #6ecbff;
+    color: #79c0ff;
     text-decoration: none;
 }
 
@@ -471,7 +486,8 @@ onBeforeUnmount(() => {
     }
 }
 @media (hover: none) and (pointer: coarse), (max-width: 768px) {
-    .source {
+    .source,
+    .model-credit {
         display: none !important;
     }
 }

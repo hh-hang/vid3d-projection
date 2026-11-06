@@ -259,6 +259,7 @@ projector.fov = result.parameters.fovDeg;
 | `orientationParams.elevationDeg` | `number` | No | `0` | Elevation angle (degrees). |
 | `orientationParams.rollDeg` | `number` | No | `0` | Roll angle (degrees). |
 | `depthSize` | `number` | No | `1024` | Depth texture resolution (square). |
+| `projectionSide` | `THREE.Side` | No | `THREE.FrontSide` | Target mesh side used for both video projection and projector depth rendering. Supports `THREE.FrontSide`, `THREE.BackSide`, and `THREE.DoubleSide`. |
 | `intensity` | `number` | No | `1` | Initial projection intensity (maps to `uniforms.intensity`). |
 | `opacity` | `number` | No | `1` | Initial opacity, clamped internally to `0~1`. |
 | `projBias` | `number` | No | `0.0001` | Depth bias to reduce projection acne/flicker. |
